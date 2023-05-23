@@ -14,7 +14,7 @@ class BabyCry(keras.utils.Sequence):
             batch_size - batch size
     """
 
-    def __init__(self, dir, split, batch_size, spec):
+    def __init__(self, dir, split, batch_size, spec, input_shape=(1, 1, 1)):
         self.dir = dir
         self.spec = spec
         self.batch_size = batch_size
