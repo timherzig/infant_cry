@@ -1,0 +1,20 @@
+data:
+  dir: 'data-dir'
+  splits: ['train', 'val', 'test']
+
+model:
+  name: 'trill'
+  trill: 
+    hub_path: 'https://tfhub.dev/google/trillsson5/1'
+    trainable: False
+  dropout: 0.2
+  bi_lstm: True
+    units: 64
+  dense: 512
+  output: 1
+
+train:
+  epochs: 100
+  batch_size: 8
+  optimizer: 'adam'
+  learning_rate: 0.0001
