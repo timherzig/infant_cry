@@ -8,7 +8,8 @@ model:
     hub_path: 'https://tfhub.dev/google/trillsson5/1'
     trainable: False
   dropout: 0.2
-  bi_lstm: True
+  bi_lstm:
+    use: True
     units: 64
   dense: 512
   output: 1

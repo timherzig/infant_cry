@@ -17,7 +17,7 @@ def trill(config):
     # x = layers.Conv1D(1, 1)(embeddings)
     x = layers.Dropout(config.d)(embeddings)  # embeddings
 
-    if config.bi_lstm:
+    if config.bi_lstm.use:
         x = tf.expand_dims(x, axis=1)
         x = layers.Bidirectional(layers.LSTM(config.bi_lstm.units))(x)
         x = layers.Flatten()(x)
