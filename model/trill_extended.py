@@ -15,7 +15,7 @@ def trill(config):
     embeddings = m(input)["embedding"]
     # embeddings = tf.expand_dims(embeddings, axis=1)
     # x = layers.Conv1D(1, 1)(embeddings)
-    x = layers.Dropout(config.d)(embeddings)  # embeddings
+    x = layers.Dropout(config.dropout)(embeddings)  # embeddings
 
     if config.bi_lstm.use:
         x = tf.expand_dims(x, axis=1)
