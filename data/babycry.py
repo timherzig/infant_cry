@@ -6,7 +6,7 @@ import pandas as pd
 from tensorflow import keras
 
 
-class BabyCry(keras.utils.sequence):
+class BabyCry(keras.utils.Sequence):
     """
     BabyCry class for loading data from the BabyCry dataset. Loads one split.
     params: dir - directory of the dataset
