@@ -29,10 +29,7 @@ class BabyCry(keras.utils.Sequence):
     def __getitem__(self, index):
         batch = self.df.iloc[index * self.batch_size : (index + 1) * self.batch_size]
 
-        audio_batch = [
-            librosa.load(os.path.join(self.root_dir, path), sr=16000)[0]
-            for path in batch["path"]
-        ]
+        audio_batch = [librosa.load(path, sr=16000)[0] for path in batch["path"]]
 
         if self.spec:
             audio_batch = [
