@@ -30,9 +30,15 @@ def main(args):
     OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
     # Initialize datasets
-    val_dataset = BabyCry(config.data.dir, "val", config.train.batch_size)
-    test_dataset = BabyCry(config.data.dir, "test", config.train.batch_size)
-    train_dataset = BabyCry(config.data.dir, "train", config.train.batch_size)
+    val_dataset = BabyCry(
+        config.data.dir, "val", config.train.batch_size, config.data.spec
+    )
+    test_dataset = BabyCry(
+        config.data.dir, "test", config.train.batch_size, config.data.spec
+    )
+    train_dataset = BabyCry(
+        config.data.dir, "train", config.train.batch_size, config.data.spec
+    )
 
     # Initialize model
     model = trill(config.model)

@@ -1,6 +1,7 @@
 data:
   dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
   splits: ['train', 'val', 'test']
+  spech: True
 
 model:
   name: 'trill'

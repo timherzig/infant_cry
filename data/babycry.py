@@ -14,8 +14,9 @@ class BabyCry(keras.utils.Sequence):
             batch_size - batch size
     """
 
-    def __init__(self, dir, split, batch_size):
+    def __init__(self, dir, split, batch_size, spec):
         self.dir = dir
+        self.spec = spec
         self.batch_size = batch_size
 
         self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
