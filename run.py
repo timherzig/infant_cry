@@ -15,6 +15,7 @@ from utils.parser import parse_arguments
 def main(args):
     # Load config & initialize wandb
     config = OmegaConf.load(args.config)
+    os.makedirs("checkpoints", exist_ok=True)
     name = (
         config.model.name
         + f'_{len([x for x in os.listdir("checkpoints") if config.model.name in x]) + 1}'
