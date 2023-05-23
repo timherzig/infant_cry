@@ -26,6 +26,7 @@ def main(args):
         name=name,
     )
     save_dir = "checkpoints/" + name
+    os.makedirs(save_dir)
     OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
     # Initialize datasets
