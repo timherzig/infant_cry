@@ -64,7 +64,10 @@ def main(args):
         ],
     )
 
-    model.evaluate(test_dataset, batch_size=config.train.batch_size)
+    model.evaluate(
+        test_dataset,
+        batch_size=config.train.batch_size,
+    )
 
 
 if __name__ == "__main__":
