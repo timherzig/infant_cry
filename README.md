@@ -19,4 +19,4 @@ with the config linking to compatible data.
 
 # Results
 
-Training using the configuration found in 'config/config_cluster.yaml' the model acheives an F1 score of \textbf{0.8556} after 100 epochs.
+Training using the configuration found in 'config/config_cluster.yaml' the model acheives an **F1 score of 0.8556** after 100 epochs.
