@@ -6,7 +6,7 @@ data:
 model:
   name: 'trill'
   trill: 
-    hub_path: 'https://tfhub.dev/google/trillsson5/1'
+    hub_path: 'https://tfhub.dev/google/trillsson1/1'
     trainable: False
   dropout: 0.2
   bi_lstm:

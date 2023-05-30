@@ -8,14 +8,13 @@ def trill(config):
     input = layers.Input(shape=(None,))
     m = hub.KerasLayer(config.trill.hub_path, trainable=config.trill.trainable)
 
-    # NOTE: Audio should be floats in [-1, 1], sampled at 16kHz. Model input is of
-    # the shape [batch size, time].
-    # audio_samples = tf.zeros([3, 64000])
-
     embeddings = m(input)["embedding"]
-    # embeddings = tf.expand_dims(embeddings, axis=1)
-    # x = layers.Conv1D(1, 1)(embeddings)
     x = layers.Dropout(config.dropout)(embeddings)  # embeddings
+
+    # # Add 2D Convolutional layer after the Dropout layer
+    # x = layers.Reshape((-1, 128, 1))(x)  # Reshape the input to a 2D array
+    # x = layers.Conv2D(filters=32, kernel_size=(3, 3), padding='same', activation='relu')(x)
+    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)  # Add MaxPooling layer after the Conv2D
 
     if config.bi_lstm.use:
         x = tf.expand_dims(x, axis=1)
@@ -24,6 +23,12 @@ def trill(config):
     else:
         x = layers.Flatten()(x)
         x = layers.Dense(config.dense, activation="relu")(x)
+
+    print(x.shape)
+    x = layers.Conv2D(
+        filters=1, kernel_size=(1, 1), padding="valid", activation="linear"
+    )(x)
+    print(x.shape)
 
     x = layers.Dense(config.dense, activation="relu")(x)
     predictions = layers.Dense(config.output, activation="sigmoid")(x)

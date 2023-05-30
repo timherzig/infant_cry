@@ -69,6 +69,8 @@ def main(args):
         batch_size=config.train.batch_size,
     )
 
+    print(f"Done! Model saved to {save_dir}")
+
 
 if __name__ == "__main__":
     args = parse_arguments()
