@@ -25,6 +25,8 @@ def trill(config):
         x = layers.Dense(config.dense, activation="relu")(x)
 
     print(x.shape)
+    x = layers.Reshape((-1, x.shape, 1))(x)
+    print(x.shape)
     x = layers.Conv2D(
         filters=1, kernel_size=(1, 1), padding="valid", activation="linear"
     )(x)
