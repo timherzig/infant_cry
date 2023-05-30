@@ -41,7 +41,10 @@ def main(args):
     )
 
     # Initialize model
-    model = trill(config.model)
+    if args.checkpoint == None:
+        model = trill(config.model)
+    else:
+        model = tf.keras.models.load_model(args.checkpoint)
 
     model.compile(
         optimizer=config.train.optimizer,
