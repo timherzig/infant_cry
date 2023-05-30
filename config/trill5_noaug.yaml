@@ -4,7 +4,7 @@ data:
   spec: False
 
 model:
-  name: 'trill'
+  name: 'trill5'
   trill: 
     hub_path: 'https://tfhub.dev/google/trillsson5/1'
     trainable: False
