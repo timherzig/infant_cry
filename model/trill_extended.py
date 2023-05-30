@@ -31,6 +31,7 @@ def trill(config):
         filters=1, kernel_size=(1, 1), padding="valid", activation="linear"
     )(x)
     print(x.shape)
+    x = layers.Flatten()(x)
 
     x = layers.Dense(config.dense, activation="relu")(x)
     predictions = layers.Dense(config.output, activation="sigmoid")(x)
