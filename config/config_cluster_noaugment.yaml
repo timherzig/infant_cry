@@ -1,0 +1,22 @@
+data:
+  dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
+  splits: ['train', 'val', 'test']
+  spec: False
+
+model:
+  name: 'trill'
+  trill: 
+    hub_path: 'https://tfhub.dev/google/trillsson5/1'
+    trainable: False
+  dropout: 0.2
+  bi_lstm:
+    use: True
+    units: 64
+  dense: 512
+  output: 1
+
+train:
+  epochs: 200
+  batch_size: 32
+  optimizer: 'adam'
+  learning_rate: 0.0001
