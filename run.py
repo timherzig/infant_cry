@@ -1,15 +1,11 @@
 import os
 import wandb
-import tensorflow as tf
 
-from keras import losses
 from omegaconf import OmegaConf
-from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
 
-from utils.metrics import get_f1
 from data.babycry import BabyCry
-from model.trill_extended import trill
 from utils.parser import parse_arguments
+from utils.training import train_single
 
 
 def main(args):
@@ -29,48 +25,11 @@ def main(args):
     os.makedirs(save_dir)
     OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
-    # Initialize datasets
-    val_dataset = BabyCry(
-        config.data.dir, "val", config.train.batch_size, config.data.spec
-    )
     test_dataset = BabyCry(
         config.data.dir, "test", config.train.batch_size, config.data.spec
     )
-    train_dataset = BabyCry(
-        config.data.dir, "train", config.train.batch_size, config.data.spec
-    )
 
-    # Initialize model
-    if args.checkpoint == None:
-        model = trill(config.model)
-    else:
-        model = tf.keras.models.load_model(args.checkpoint)
-
-    model.compile(
-        optimizer=config.train.optimizer,
-        loss=losses.BinaryCrossentropy(),
-        metrics=[get_f1, "accuracy"],
-    )
-
-    model.summary()
-
-    # Train model
-    model.fit(
-        train_dataset,
-        validation_data=val_dataset,
-        epochs=config.train.epochs,
-        batch_size=config.train.batch_size,
-        callbacks=[
-            WandbMetricsLogger(),
-            WandbModelCheckpoint(save_dir, monitor="val_loss", mode="min"),
-            tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10),
-        ],
-    )
-
-    model.evaluate(
-        test_dataset,
-        batch_size=config.train.batch_size,
-    )
+    train_single(None, None, test_dataset, args, config, save_dir)
 
     print(f"Done! Model saved to {save_dir}")
 

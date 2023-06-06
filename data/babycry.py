@@ -14,12 +14,17 @@ class BabyCry(keras.utils.Sequence):
             batch_size - batch size
     """
 
-    def __init__(self, dir, split, batch_size, spec, input_shape=(1, 1, 1)):
+    def __init__(
+        self, dir, split, batch_size, spec, speakers: list = None, input_shape=(1, 1, 1)
+    ):
         self.dir = dir
         self.spec = spec
         self.batch_size = batch_size
 
         self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
+
+        if speakers != None:
+            self.df = self.df[self.df["speaker"].isin(speakers)]
 
         self.df_len = len(self.df.index)
         self.indexes = np.arange(self.df_len)
