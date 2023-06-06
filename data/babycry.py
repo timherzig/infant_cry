@@ -50,6 +50,8 @@ class BabyCry(keras.utils.Sequence):
                 [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
             )
 
-        label_batch = np.asarray([0 if label == "J" else 1 for label in batch["label"]])
+        label_batch = np.asarray(
+            [[1, 0] if label == "J" else [0, 1] for label in batch["label"]]
+        )
 
         return audio_batch, label_batch
