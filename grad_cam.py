@@ -51,9 +51,7 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
     From the TensorFlow Grad-CAM tutorial: https://keras.io/examples/vision/grad_cam/
     """
 
-    input_array = tf.convert_to_tensor(
-        input_array, dtype=tf.float32, dtype_hint=None, name=None
-    )
+    input_array = tf.convert_to_tensor(np.array(input_array))
     # First, we create a model that maps the input image to the activations
     # of the last conv layer as well as the output predictions
     grad_model = tf.keras.models.Model(
@@ -132,9 +130,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--audio_path",
         type=str,
-        default="/Users/tim/DFKI/datasets/BabyCry_no_augment/clips/G2900306.wav",
+        default="/netscratch/herzig/datasets/BabyCry_no_augment",
     )
-    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_1")
+    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_5")
     parser.add_argument("--last_conv_layer_name", type=str, default="conv2d")
     args = parser.parse_args()
 

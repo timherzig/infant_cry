@@ -28,6 +28,7 @@ class BabyCry(keras.utils.Sequence):
 
         self.df_len = len(self.df.index)
         self.indexes = np.arange(self.df_len)
+        self.input_shape = input_shape
 
     def __len__(self):
         return int(np.floor(self.df_len / self.batch_size))
@@ -51,7 +52,7 @@ class BabyCry(keras.utils.Sequence):
             )
 
         label_batch = np.asarray(
-            [[1, 0] if label == "J" else [0, 1] for label in batch["label"]]
+            [[1., 0.] if label == "J" else [0., 1.] for label in batch["label"]]
         )
 
         return audio_batch, label_batch
