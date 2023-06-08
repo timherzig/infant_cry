@@ -19,11 +19,21 @@ def trill(config):
         x = layers.Flatten()(x)
         x = layers.Dense(config.dense, activation="relu")(x)
 
-    # Convolutional layer used for visualizing/XAI
-    x = layers.Reshape((x.shape[1], 1, 1))(x)
+    # Convolutional layer used for visualizing/XAI Tim Impl.
+    # x = layers.Reshape((x.shape[1], 1, 1))(x)
+    # x = layers.Conv2D(
+    #     filters=1, kernel_size=(1, 1), padding="valid", activation="linear"
+    # )(x)
+    # x = layers.Flatten()(x)
+
+    # Razieh Impl.
+    x = layers.Reshape((-1, 128, 1))(x)  # Reshape the input to a 2D array
     x = layers.Conv2D(
-        filters=1, kernel_size=(1, 1), padding="valid", activation="linear"
+        filters=32, kernel_size=(3, 3), padding="same", activation="relu"
     )(x)
+    x = layers.MaxPooling2D(pool_size=(2, 2))(
+        x
+    )  # Add MaxPooling layer after the Conv2D
     x = layers.Flatten()(x)
 
     x = layers.Dense(config.dense, activation="relu")(x)
