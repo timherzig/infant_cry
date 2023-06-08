@@ -51,9 +51,6 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
     From the TensorFlow Grad-CAM tutorial: https://keras.io/examples/vision/grad_cam/
     """
 
-    # input_array = tf.convert_to_tensor(
-    #     input_array, dtype=tf.float32, dtype_hint=None, name=None
-    # )
     # First, we create a model that maps the input image to the activations
     # of the last conv layer as well as the output predictions
     grad_model = tf.keras.models.Model(
@@ -70,7 +67,7 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
 
     # This is the gradient of the output neuron (top predicted or chosen)
     # with regard to the output feature map of the last conv layer
-    with tf.device('/CPU:0'):
+    with tf.device("/CPU:0"):
         grads = tape.gradient(
             class_channel,
             last_conv_layer_output,
@@ -110,23 +107,21 @@ def grad_cam(dataset_root: str, model_path: str, last_conv_layer_name: str = "co
     model = tf.keras.models.load_model(model_path, custom_objects={"get_f1": get_f1})
     model.layers[-1].activation = None
 
-    heatmap = make_gradcam_heatmap(
-        audio, model, last_conv_layer_name
-    )  # , pred_index=0 / 1)
+    heatmap = make_gradcam_heatmap(audio, model, last_conv_layer_name)
 
     # Display heatmap
     plt.matshow(heatmap)
     plt.show()
 
     # Save and display Grad CAM
-    save_and_display_gradcam(
-        audio_spec_aug,
-        heatmap,
-        cam_path=model_path.split("/")[-1].split(".")[0]
-        + "_"
-        + audio_path.split("/")[-1].split(".")[0]
-        + "_grad_cam.jpg",
-    )
+    # save_and_display_gradcam(
+    #     audio_spec_aug,
+    #     heatmap,
+    #     cam_path=model_path.split("/")[-1].split(".")[0]
+    #     + "_"
+    #     + audio_path.split("/")[-1].split(".")[0]
+    #     + "_grad_cam.jpg",
+    # )
 
 
 if __name__ == "__main__":
@@ -136,7 +131,7 @@ if __name__ == "__main__":
         type=str,
         default="/netscratch/herzig/datasets/BabyCry_no_augment",
     )
-    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_5")
+    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_14")
     parser.add_argument("--last_conv_layer_name", type=str, default="conv2d")
     args = parser.parse_args()
 
