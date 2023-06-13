@@ -105,9 +105,9 @@ def grad_cam(dataset_root: str, model_path: str, last_conv_layer_name: str = "co
     audio, label = test_dataset.__getitem__(random.randint(0, test_dataset.__len__()))
 
     model = tf.keras.models.load_model(model_path, custom_objects={"get_f1": get_f1})
-    model.layers[-1].activation = None
+    # model.layers[-1].activation = None
 
-    heatmap = make_gradcam_heatmap(audio, model, last_conv_layer_name)
+    # heatmap = make_gradcam_heatmap(audio, model, last_conv_layer_name)
 
     # Display heatmap
     plt.matshow(heatmap)
