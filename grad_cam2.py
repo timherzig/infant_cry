@@ -86,8 +86,7 @@ def main(
     dataset_root: str,
     last_conv_layer_name: str = "conv2d",
     classification_layer_names: list = [
-        "max_pooling2d",
-        "flatten_1",
+        "flatten",
         "dense",
         "dense_1",
     ],
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         type=str,
         default="/netscratch/herzig/datasets/BabyCry_no_augment",
     )
-    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_14")
+    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_22")
     parser.add_argument("--last_conv_layer_name", type=str, default="conv2d")
     args = parser.parse_args()
 
