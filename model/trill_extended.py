@@ -21,9 +21,9 @@ def trill(config):
 
     # Convolutional layer used for visualizing/XAI Tim Impl.
     x = layers.Reshape((x.shape[1], 1, 1))(x)
-    x = layers.Conv2D(
-        filters=32, kernel_size=(3, 3), padding="same", activation="relu"
-    )(x)
+    x = layers.Conv2D(filters=1, kernel_size=(3, 3), padding="same", activation="relu")(
+        x
+    )
     # x = layers.MaxPooling2D(pool_size=(2,1))(x)
     x = layers.Flatten()(x)
 
