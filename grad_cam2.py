@@ -1,4 +1,5 @@
 import numpy as np
+from argparse import ArgumentParser
 
 # Model
 import tensorflow as tf
@@ -108,3 +109,17 @@ def main(
 
     print(f"Heatmap shape: {heatmap.shape}")
     print("Plotting heatmap...")
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--audio_path",
+        type=str,
+        default="/netscratch/herzig/datasets/BabyCry_no_augment",
+    )
+    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_14")
+    parser.add_argument("--last_conv_layer_name", type=str, default="conv2d")
+    args = parser.parse_args()
+
+    main(args.model_path, args.audio_path, args.last_conv_layer_name)
