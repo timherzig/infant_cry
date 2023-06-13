@@ -14,7 +14,7 @@ def trill(config):
     if config.bi_lstm.use:
         x = tf.expand_dims(x, axis=1)
         x = layers.Bidirectional(layers.LSTM(config.bi_lstm.units))(x)
-        x = layers.Flatten()(x)
+        # x = layers.Flatten()(x)
     else:
         x = layers.Flatten()(x)
         x = layers.Dense(config.dense, activation="relu")(x)
@@ -22,9 +22,9 @@ def trill(config):
     # Convolutional layer used for visualizing/XAI Tim Impl.
     x = layers.Reshape((x.shape[1], 1, 1))(x)
     x = layers.Conv2D(
-        filters=32, kernel_size=(3, 3), padding="same", activation="relu"
+        filters=1, kernel_size=(3, 3), padding="same", activation="relu"
     )(x)
-    x = layers.MaxPooling2D(pool_size=(2,1))(x)
+    # x = layers.MaxPooling2D(pool_size=(2,1))(x)
     x = layers.Flatten()(x)
 
     x = layers.Dense(config.dense, activation="relu")(x)
