@@ -43,20 +43,19 @@ def make_gradcam_heatmap(
     with tf.GradientTape() as tape:
         # Get the output of the last conv layer
         last_conv_layer_output = last_conv_layer_model(input)
-        print(f'Conv layer output shape: {last_conv_layer_output.shape}')
+        print(f"Conv layer output shape: {last_conv_layer_output.shape}")
         tape.watch(last_conv_layer_output)
         # Get the outout of the 'original' model
         preds = classifier_model(last_conv_layer_output)
-        # top_class_channel = preds[:, tf.argmax(preds[0])]
-        print(f'Preds: {preds}')
+        print(f"Preds: {preds}")
         top_pred_index = tf.argmax(preds[0])
-        print(f'Top pred index: {top_pred_index}')
+        print(f"Top pred index: {top_pred_index}")
         top_class_channel = preds[:, top_pred_index]
-        print(f'Top class: {top_class_channel}')
+        print(f"Top class: {top_class_channel}")
 
     # Gradient of the top predicted class with regard to the output of the last conv layer
     grads = tape.gradient(top_class_channel, last_conv_layer_output)
-    print(f'Grads: {grads}')
+    print(f"Grads: {grads}")
 
     # Mean gradient over a specific feature map channel
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
