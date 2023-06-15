@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from argparse import ArgumentParser
 
@@ -15,6 +16,7 @@ from IPython.display import Image
 import random
 from data.babycry import BabyCry
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 def make_gradcam_heatmap(
     input, model, last_conv_layer_name, classification_layer_names
