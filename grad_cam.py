@@ -1,4 +1,5 @@
 import os
+import random
 import librosa
 
 import numpy as np
@@ -7,13 +8,13 @@ from tensorflow import keras
 
 from argparse import ArgumentParser
 from utils.metrics import get_f1
+from data.babycry import BabyCry
 
 # Display
 from IPython.display import Image, display
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
 def save_and_display_gradcam(img, heatmap, cam_path="grad_cam.jpg", alpha=0.4):
     # Load the original image
@@ -50,7 +51,6 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
     From the TensorFlow Grad-CAM tutorial: https://keras.io/examples/vision/grad_cam/
     """
 
-    input_array = tf.convert_to_tensor(input_array, dtype=tf.float32, dtype_hint=None, name=None)
     # First, we create a model that maps the input image to the activations
     # of the last conv layer as well as the output predictions
     grad_model = tf.keras.models.Model(
@@ -60,7 +60,6 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
     # Then, we compute the gradient of the top predicted class for our input image
     # with respect to the activations of the last conv layer
     with tf.GradientTape() as tape:
-        tf.TensorSpec.from_tensor(input_array)
         last_conv_layer_output, preds = grad_model(input_array)
         if pred_index is None:
             pred_index = tf.argmax(preds[0])
@@ -68,7 +67,11 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
 
     # This is the gradient of the output neuron (top predicted or chosen)
     # with regard to the output feature map of the last conv layer
-    grads = tape.gradient(class_channel, last_conv_layer_output, )
+    with tf.device("/CPU:0"):
+        grads = tape.gradient(
+            class_channel,
+            last_conv_layer_output,
+        )
 
     # This is a vector where each entry is the mean intensity of the gradient
     # over a specific feature map channel
@@ -86,7 +89,7 @@ def make_gradcam_heatmap(input_array, model, last_conv_layer_name, pred_index=No
     return heatmap.numpy()
 
 
-def grad_cam(audio_path: str, model_path: str, last_conv_layer_name: str = "conv2d"):
+def grad_cam(dataset_root: str, model_path: str, last_conv_layer_name: str = "conv2d"):
     """
     Creates and saves a Grad-CAM image for the given audio file when classified using a pre-trained model.
 
@@ -97,39 +100,38 @@ def grad_cam(audio_path: str, model_path: str, last_conv_layer_name: str = "conv
         last_conv_layer_name (str): name of last convolutional layer in model, defaults to 'conv2d' (default for TRILL model in this repository)
     """
 
-    audio = [librosa.load(audio_path, sr=16000)[0]]
-    audio_spec_aug = librosa.feature.melspectrogram(
-        audio[0], sr=16000, n_mels=1, fmax=8000
-    )
+    # Load audio
+    test_dataset = BabyCry(dataset_root, "test", 1, False)
+    audio, label = test_dataset.__getitem__(random.randint(0, test_dataset.__len__()))
 
-    model = tf.keras.models.load_model(model_path, custom_objects={'get_f1': get_f1})
-    model.layers[-1].activation = None
+    model = tf.keras.models.load_model(model_path, custom_objects={"get_f1": get_f1})
+    # model.layers[-1].activation = None
 
-    # prediction = model.predict(audio)
-
-    heatmap = make_gradcam_heatmap(audio, model, last_conv_layer_name)
+    # heatmap = make_gradcam_heatmap(audio, model, last_conv_layer_name)
 
     # Display heatmap
     plt.matshow(heatmap)
     plt.show()
 
     # Save and display Grad CAM
-    save_and_display_gradcam(
-        audio_spec_aug,
-        heatmap,
-        cam_path=model_path.split("/")[-1].split(".")[0]
-        + "_"
-        + audio_path.split("/")[-1].split(".")[0]
-        + "_grad_cam.jpg",
-    )
+    # save_and_display_gradcam(
+    #     audio_spec_aug,
+    #     heatmap,
+    #     cam_path=model_path.split("/")[-1].split(".")[0]
+    #     + "_"
+    #     + audio_path.split("/")[-1].split(".")[0]
+    #     + "_grad_cam.jpg",
+    # )
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--audio_path", type=str, default="/netscratch/herzig/datasets/BabyCry_no_augment/clips/G2900346.wav")
     parser.add_argument(
-        "--model_path", type=str, default="checkpoints/trill1_1"
+        "--audio_path",
+        type=str,
+        default="/netscratch/herzig/datasets/BabyCry_no_augment",
     )
+    parser.add_argument("--model_path", type=str, default="checkpoints/trill1_14")
     parser.add_argument("--last_conv_layer_name", type=str, default="conv2d")
     args = parser.parse_args()
 

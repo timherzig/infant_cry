@@ -12,8 +12,8 @@ model:
   bi_lstm:
     use: True
     units: 64
-  dense: 512
-  output: 1
+  dense: 64
+  output: 2
 
 train:
   epochs: 100
