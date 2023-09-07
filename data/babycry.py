@@ -15,11 +15,22 @@ class BabyCry(keras.utils.Sequence):
     """
 
     def __init__(
-        self, dir, split, batch_size, spec, speakers: list = None, input_shape=(1, 1, 1)
+        self,
+        dir,
+        split,
+        batch_size,
+        spec,
+        speakers: list = None,
+        input_shape=(1, 1, 1),
+        spec_extraction=None,
+        options=None,
     ):
         self.dir = dir
         self.spec = spec
         self.batch_size = batch_size
+
+        self.spec_extraction = spec_extraction
+        self.options = options
 
         self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
 
@@ -36,23 +47,31 @@ class BabyCry(keras.utils.Sequence):
     def __getitem__(self, index):
         batch = self.df.iloc[index * self.batch_size : (index + 1) * self.batch_size]
 
-        audio_batch = [librosa.load(path, sr=16000)[0] for path in batch["path"]]
-
-        if self.spec:
-            audio_batch = [
-                librosa.feature.melspectrogram(
-                    x, sr=16000, n_mels=self.input_shape[1], fmax=8000
-                )[: self.input_shape[0]]
-                for x in audio_batch
-            ]
-        else:
-            max_len = max(len(row) for row in audio_batch)
-            audio_batch = np.array(
-                [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
+        if self.spec_extraction != None:
+            audio_batch = np.asarray(
+                [
+                    self.spec_extraction(path, self.options.input_size)
+                    for path in batch["path"]
+                ]
             )
+        else:
+            audio_batch = [librosa.load(path, sr=16000)[0] for path in batch["path"]]
+
+            if self.spec:
+                audio_batch = [
+                    librosa.feature.melspectrogram(
+                        x, sr=16000, n_mels=self.input_shape[1], fmax=8000
+                    )[: self.input_shape[0]]
+                    for x in audio_batch
+                ]
+            else:
+                max_len = max(len(row) for row in audio_batch)
+                audio_batch = np.array(
+                    [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
+                )
 
         label_batch = np.asarray(
-            [[1., 0.] if label == "J" else [0., 1.] for label in batch["label"]]
+            [[1.0, 0.0] if label == "J" else [0.0, 1.0] for label in batch["label"]]
         )
 
         return audio_batch, label_batch

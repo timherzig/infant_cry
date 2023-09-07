@@ -17,29 +17,13 @@ def train_single(
     config: dict,
     save_dir: str,
 ):
-    # Initialize datasets
-    val_dataset = BabyCry(
-        config.data.dir,
-        "val",
-        config.train.batch_size,
-        config.data.spec,
-        val_speakers,
-    )
-
-    train_dataset = BabyCry(
-        config.data.dir,
-        "train",
-        config.train.batch_size,
-        config.data.spec,
-        train_speakers,
-    )
-
     # Initialize model
     if args.checkpoint == None:
         if config.model == "trill":
             model = trill(config.model)
+            spec_extraction = options = None
         elif config.model == "jdc":
-            model = jdc(config.model)
+            model, spec_extraction, options = jdc(config.model)
     else:
         model = tf.keras.models.load_model(args.checkpoint)
 
@@ -50,6 +34,27 @@ def train_single(
     )
 
     model.summary()
+
+    # Initialize datasets
+    val_dataset = BabyCry(
+        config.data.dir,
+        "val",
+        config.train.batch_size,
+        config.data.spec,
+        val_speakers,
+        spec_extraction,
+        options,
+    )
+
+    train_dataset = BabyCry(
+        config.data.dir,
+        "train",
+        config.train.batch_size,
+        config.data.spec,
+        train_speakers,
+        spec_extraction,
+        options,
+    )
 
     # Train model
     model.fit(
