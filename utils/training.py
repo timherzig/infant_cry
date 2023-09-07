@@ -4,6 +4,7 @@ from keras import losses
 from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
 
 from model.trill_extended import trill
+from model.jdc_extended import jdc
 from utils.metrics import get_f1
 from data.babycry import BabyCry
 
@@ -35,7 +36,10 @@ def train_single(
 
     # Initialize model
     if args.checkpoint == None:
-        model = trill(config.model)
+        if config.model == "trill":
+            model = trill(config.model)
+        elif config.model == "jdc":
+            model = jdc(config.model)
     else:
         model = tf.keras.models.load_model(args.checkpoint)
 
