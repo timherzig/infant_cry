@@ -19,11 +19,13 @@ def train_single(
 ):
     # Initialize model
     if args.checkpoint == None:
-        if config.model == "trill":
-            model = trill(config.model)
+        if config.model.name == "trill":
+            model = trill(config)
             spec_extraction = options = None
-        elif config.model == "jdc":
-            model, spec_extraction, options = jdc(config.model)
+            print(f"Got TRILL model: {model}")
+        elif config.model.name == "jdc":
+            model, spec_extraction, options = jdc(config)
+            print(f"Got JDC model: {model}")
     else:
         model = tf.keras.models.load_model(args.checkpoint)
 
@@ -42,8 +44,8 @@ def train_single(
         config.train.batch_size,
         config.data.spec,
         val_speakers,
-        spec_extraction,
-        options,
+        spec_extraction=spec_extraction,
+        options=options,
     )
 
     train_dataset = BabyCry(
@@ -52,8 +54,8 @@ def train_single(
         config.train.batch_size,
         config.data.spec,
         train_speakers,
-        spec_extraction,
-        options,
+        spec_extraction=spec_extraction,
+        options=options,
     )
 
     # Train model

@@ -48,12 +48,25 @@ class BabyCry(keras.utils.Sequence):
         batch = self.df.iloc[index * self.batch_size : (index + 1) * self.batch_size]
 
         if self.spec_extraction != None:
-            audio_batch = np.asarray(
+            audio_batch = [
+                np.asarray(self.spec_extraction(path, self.options.input_size)[0])
+                for path in batch["path"]
+            ]
+            longest = 0
+            for audio in audio_batch:
+                if audio.shape[0] > longest:
+                    longest = audio.shape[0]
+
+            # pad all audio to the same length
+            audio_batch = np.array(
                 [
-                    self.spec_extraction(path, self.options.input_size)
-                    for path in batch["path"]
+                    np.pad(
+                        audio, ((0, longest - audio.shape[0]), (0, 0), (0, 0), (0, 0))
+                    )
+                    for audio in audio_batch
                 ]
             )
+
         else:
             audio_batch = [librosa.load(path, sr=16000)[0] for path in batch["path"]]
 
@@ -73,5 +86,10 @@ class BabyCry(keras.utils.Sequence):
         label_batch = np.asarray(
             [[1.0, 0.0] if label == "J" else [0.0, 1.0] for label in batch["label"]]
         )
+
+        # print(f"audio_batch shape: {audio_batch.shape}")
+        # print(f"label_batch shape: {label_batch.shape}")
+        if self.batch_size == 1:
+            audio_batch = audio_batch[0]
 
         return audio_batch, label_batch

@@ -14,7 +14,7 @@ model:
     model_path: 'model/melodyExtraction_JDC/weights/ResNet_joint_add_L(CE_G).hdf5'
   dropout: 0.2
   bi_lstm:
-    use: False
+    use: True
     units: 64
   dense: 64
   output: 2
