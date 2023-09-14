@@ -12,15 +12,15 @@ model:
     figureON: False
     trainable: False
     model_path: 'model/melodyExtraction_JDC/weights/ResNet_joint_add_L(CE_G).hdf5'
-  dropout: 0.2
+  dropout: 0.3
   bi_lstm:
     use: False
     units: 64
-  dense: 64
+  dense: 128
   output: 2
 
 train:
   epochs: 100
-  batch_size: 4
+  batch_size: 32
   optimizer: 'adam'
   learning_rate: 0.0001

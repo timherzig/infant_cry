@@ -12,7 +12,6 @@ from data.babycry import BabyCry
 def train_single(
     train_speakers: list,
     val_speakers: list,
-    test_dataset: BabyCry,
     args: dict,
     config: dict,
     save_dir: str,
@@ -54,6 +53,15 @@ def train_single(
         config.train.batch_size,
         config.data.spec,
         train_speakers,
+        spec_extraction=spec_extraction,
+        options=options,
+    )
+
+    test_dataset = BabyCry(
+        config.data.dir,
+        "test",
+        config.train.batch_size,
+        config.data.spec,
         spec_extraction=spec_extraction,
         options=options,
     )

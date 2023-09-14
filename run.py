@@ -25,11 +25,7 @@ def main(args):
     os.makedirs(save_dir)
     OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
-    test_dataset = BabyCry(
-        config.data.dir, "test", config.train.batch_size, config.data.spec
-    )
-
-    train_single(None, None, test_dataset, args, config, save_dir)
+    train_single(None, None, args, config, save_dir)
 
     print(f"Done! Model saved to {save_dir}")
 
