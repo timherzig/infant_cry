@@ -1,6 +1,8 @@
 import tensorflow as tf
 
 from keras import losses
+
+# from tf.keras.metrics import F1Score
 from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
 
 from model.trill_extended import trill
@@ -31,7 +33,7 @@ def train_single(
     model.compile(
         optimizer=config.train.optimizer,
         loss=losses.BinaryCrossentropy(),
-        metrics=[get_f1, "accuracy"],
+        metrics=[get_f1, tf.keras.metrics.F1Score, "accuracy"],
     )
 
     model.summary()

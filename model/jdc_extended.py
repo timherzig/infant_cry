@@ -57,7 +57,19 @@ def jdc(config):
 
     embeddings = layers.TimeDistributed(jdc_model)(input)
     x = layers.Dropout(config.model.dropout)(embeddings[0])  # embeddings
-    x = tf.reduce_mean(x, axis=1)
+    # x = tf.reduce_mean(x, axis=1)
+
+    print(f"JDC output shape: {x.shape}")
+    # TODO: ADD DELTA FEATURES
+    shift_x = tf.roll(x, shift=1, axis=1)
+    first_elem = x[:, 0, :, :]
+    print(f"first elem shape: {first_elem.shape}")
+    shift_x[:, 0, :, :] = first_elem[:, :, :]
+    print(f"shift_x shape: {shift_x.shape}")
+
+    delta_x = x - shift_x
+    x = tf.stack([x, delta_x])
+    print(f"JDC delta output shape: {x.shape}")
 
     if config.model.bi_lstm.use:
         # x = tf.expand_dims(x, axis=1)
@@ -67,13 +79,13 @@ def jdc(config):
         x = layers.Flatten()(x)
         x = layers.Dense(config.model.dense, activation="relu")(x)
 
-    # Convolutional layer used for visualizing/XAI Tim Impl.
-    x = layers.Reshape((x.shape[1], 1, 1))(x)
-    x = layers.Conv2D(filters=1, kernel_size=(3, 3), padding="same", activation="relu")(
-        x
-    )
-    # x = layers.MaxPooling2D(pool_size=(2,1))(x)
-    x = layers.Flatten()(x)
+    # # Convolutional layer used for visualizing/XAI Tim Impl.
+    # x = layers.Reshape((x.shape[1], 1, 1))(x)
+    # x = layers.Conv2D(filters=1, kernel_size=(3, 3), padding="same", activation="relu")(
+    #     x
+    # )
+    # # x = layers.MaxPooling2D(pool_size=(2,1))(x)
+    # x = layers.Flatten()(x)
 
     x = layers.Dense(config.model.dense, activation="relu")(x)
     predictions = layers.Dense(config.model.output, activation="sigmoid")(x)
