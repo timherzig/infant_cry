@@ -1,9 +1,69 @@
 import os
+import random
 import librosa
 import numpy as np
 import pandas as pd
+import soundfile as sf
+import utility
 
 from tensorflow import keras
+
+
+def augment_data(speech_path, irfile_path):
+    speech, fs_s = sf.read(speech_path)
+
+    speech_length = speech.shape[0]
+
+    if speech_length > 96000:
+        speech = speech[0:96000]
+        # sf.write(process_full_path,IR,fs_s)
+    else:
+        zeros_len = 96000 - speech_length
+        zeros_lis = np.zeros(zeros_len)
+        speech = np.concatenate([speech, zeros_lis])
+
+    if np.issubdtype(speech.dtype, np.integer):
+        speech = utility.pcm2float(speech, "float32")
+    # convolution
+    if irfile_path:
+        IR, fs_i = sf.read(irfile_path)
+
+        IR_length = IR.shape[0]
+
+        if IR_length > fs_s:
+            IR = IR[0:fs_s, :]
+        else:
+            zeros_len = fs_s - IR_length
+            zeros_lis = np.zeros([zeros_len, 2])
+            IR = np.concatenate([IR, zeros_lis])
+
+        if np.issubdtype(IR.dtype, np.integer):
+            IR = utility.pcm2float(IR, "float32")
+        temp0 = utility.smart_convolve(speech, IR[:, 0])
+        temp1 = utility.smart_convolve(speech, IR[:, 1])
+
+        temp = np.transpose(np.concatenate(([temp0], [temp1]), axis=0))
+
+        speech = np.array(temp)
+
+    maxval = np.max(np.fabs(speech))
+    if maxval == 0:
+        print("file {} not saved due to zero strength".format(speech_path))
+        return -1
+    if maxval >= 1:
+        amp_ratio = 0.99 / maxval
+        speech = speech * amp_ratio
+
+    return speech
+
+
+def augment_audio(audio_path, rar_dir, augment):
+    if np.random.random() >= augment:
+        return librosa.load(audio_path, sr=16000)[0]
+
+    rar_path = os.path.join(rar_dir, random.choice(os.listdir(rar_dir)))
+
+    return augment_data(audio_path, rar_path)
 
 
 class BabyCry(keras.utils.Sequence):
@@ -24,6 +84,8 @@ class BabyCry(keras.utils.Sequence):
         input_shape=(1, 1, 1),
         spec_extraction=None,
         options=None,
+        augment=0,
+        rir_dir=None,
     ):
         self.dir = dir
         self.spec = spec
@@ -31,6 +93,8 @@ class BabyCry(keras.utils.Sequence):
 
         self.spec_extraction = spec_extraction
         self.options = options
+        self.augment = augment
+        self.rir_dir = rir_dir
 
         self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
 
@@ -68,7 +132,10 @@ class BabyCry(keras.utils.Sequence):
             )
 
         else:
-            audio_batch = [librosa.load(path, sr=16000)[0] for path in batch["path"]]
+            audio_batch = [
+                augment_audio(path, self.rar_dir, self.augment)
+                for path in batch["path"]
+            ]
 
             if self.spec:
                 audio_batch = [

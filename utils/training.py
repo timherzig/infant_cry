@@ -47,6 +47,8 @@ def train_single(
         val_speakers,
         spec_extraction=spec_extraction,
         options=options,
+        augment=config.data.augment,
+        rir_dir=config.data.rir_dir,
     )
 
     train_dataset = BabyCry(
@@ -57,6 +59,8 @@ def train_single(
         train_speakers,
         spec_extraction=spec_extraction,
         options=options,
+        augment=config.data.augment,
+        rir_dir=config.data.rir_dir,
     )
 
     test_dataset = BabyCry(
@@ -66,6 +70,8 @@ def train_single(
         config.data.spec,
         spec_extraction=spec_extraction,
         options=options,
+        augment=config.data.augment,
+        rir_dir=config.data.rir_dir,
     )
 
     # Train model
