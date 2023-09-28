@@ -17,12 +17,12 @@ model:
   dropout: 0.2
   bi_lstm:
     use: True
-    units: 8
-  dense: 16
+    units: 4
+  dense: 4
   output: 2
 
 train:
   epochs: 20
-  batch_size: 16
+  batch_size: 32
   optimizer: 'adam'
   learning_rate: 0.0001

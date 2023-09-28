@@ -66,6 +66,7 @@ def jdc(config):
 
     if config.model.bi_lstm.use:
         x = layers.Reshape((-1, x.shape[2] * x.shape[3] * x.shape[4]))(x)
+        x = layers.Dropout(config.model.dropout)(x)
         print(f"Reshaped x: {x.shape}")
         x = layers.Bidirectional(
             layers.LSTM(
