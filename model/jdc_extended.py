@@ -57,24 +57,21 @@ def jdc(config):
 
     embeddings = layers.TimeDistributed(jdc_model)(input)
     x = layers.Dropout(config.model.dropout)(embeddings[0])  # embeddings
-    # x = tf.reduce_mean(x, axis=1)
 
     print(f"JDC output shape: {x.shape}")
-    # # TODO: ADD DELTA FEATURES
-    # shift_x = tf.roll(x, shift=1, axis=1)
-    # first_elem = x[:, 0, :, :]
-    # print(f"first elem shape: {first_elem.shape}")
-    # shift_x[:, 0, :, :] = first_elem[:, :, :]
-    # print(f"shift_x shape: {shift_x.shape}")
-
-    # delta_x = x - shift_x
-    # x = tf.stack([x, delta_x])
-    # print(f"JDC delta output shape: {x.shape}")
+    delta = x[:, 1:, :] - x[:, :-1, :]
+    delta = tf.concat([tf.zeros_like(delta[:, :1, :]), delta], axis=1)
+    x = tf.stack([x, delta], axis=2)
+    print(f"X after delta shape: {x.shape}")
 
     if config.model.bi_lstm.use:
-        x = layers.Reshape((-1, x.shape[2] * x.shape[3]))(x)
-        print(f"shape after reshape: {x.shape}")
-        x = layers.Bidirectional(layers.LSTM(config.model.bi_lstm.units))(x)
+        x = layers.Reshape((-1, x.shape[2] * x.shape[3] * x.shape[4]))(x)
+        print(f"Reshaped x: {x.shape}")
+        x = layers.Bidirectional(
+            layers.LSTM(
+                config.model.bi_lstm.units,
+            ),
+        )(x)
         x = layers.Flatten()(x)
     else:
         x = layers.Flatten()(x)

@@ -12,9 +12,10 @@ def main(args):
     # Load config & initialize wandb
     config = OmegaConf.load(args.config)
     os.makedirs("checkpoints", exist_ok=True)
+    run_name = config.model.name + '_' + args.config.split('/')[-1].split('.')[0]
     name = (
-        config.model.name
-        + f'_{len([x for x in os.listdir("checkpoints") if config.model.name in x]) + 1}'
+        run_name
+        + f'_{len([x for x in os.listdir("checkpoints") if run_name in x]) + 1}'
     )
     wandb.init(
         project="trill_babycry",
@@ -25,7 +26,9 @@ def main(args):
     os.makedirs(save_dir)
     OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
-    train_single(None, None, args, config, save_dir)
+    loss, f1, acc = train_single(None, None, args, config, save_dir)
+
+    wandb.log({'test_accuracy': acc, 'test_f1': f1})
 
     print(f"Done! Model saved to {save_dir}")
 

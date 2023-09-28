@@ -47,7 +47,7 @@ def train_single(
         val_speakers,
         spec_extraction=spec_extraction,
         options=options,
-        augment=config.data.augment,
+        augment=0,
         rir_dir=config.data.rir_dir,
     )
 
@@ -87,9 +87,10 @@ def train_single(
         ],
     )
 
-    model.evaluate(
+    loss, f1, acc = model.evaluate(
         test_dataset,
         batch_size=config.train.batch_size,
     )
+    
+    return loss, f1, acc
 
-    return
