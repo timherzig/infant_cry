@@ -70,7 +70,7 @@ def train_single(
         config.data.spec,
         spec_extraction=spec_extraction,
         options=options,
-        augment=config.data.augment,
+        augment=0,
         rir_dir=config.data.rir_dir,
     )
 
