@@ -60,19 +60,20 @@ def jdc(config):
     # x = tf.reduce_mean(x, axis=1)
 
     print(f"JDC output shape: {x.shape}")
-    # TODO: ADD DELTA FEATURES
-    shift_x = tf.roll(x, shift=1, axis=1)
-    first_elem = x[:, 0, :, :]
-    print(f"first elem shape: {first_elem.shape}")
-    shift_x[:, 0, :, :] = first_elem[:, :, :]
-    print(f"shift_x shape: {shift_x.shape}")
+    # # TODO: ADD DELTA FEATURES
+    # shift_x = tf.roll(x, shift=1, axis=1)
+    # first_elem = x[:, 0, :, :]
+    # print(f"first elem shape: {first_elem.shape}")
+    # shift_x[:, 0, :, :] = first_elem[:, :, :]
+    # print(f"shift_x shape: {shift_x.shape}")
 
-    delta_x = x - shift_x
-    x = tf.stack([x, delta_x])
-    print(f"JDC delta output shape: {x.shape}")
+    # delta_x = x - shift_x
+    # x = tf.stack([x, delta_x])
+    # print(f"JDC delta output shape: {x.shape}")
 
     if config.model.bi_lstm.use:
-        # x = tf.expand_dims(x, axis=1)
+        x = layers.Reshape((-1, x.shape[2] * x.shape[3]))(x)
+        print(f"shape after reshape: {x.shape}")
         x = layers.Bidirectional(layers.LSTM(config.model.bi_lstm.units))(x)
         x = layers.Flatten()(x)
     else:
