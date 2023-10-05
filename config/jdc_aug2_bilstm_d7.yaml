@@ -14,7 +14,7 @@ model:
     figureON: False
     trainable: False
     model_path: 'model/melodyExtraction_JDC/weights/ResNet_joint_add_L(CE_G).hdf5'
-  dropout: 0.5
+  dropout: 0.7
   bi_lstm:
     use: True
     units: 32

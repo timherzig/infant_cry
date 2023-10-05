@@ -17,8 +17,8 @@ model:
   dropout: 0.5
   bi_lstm:
     use: True
-    units: 32
-  dense: 64
+    units: 64
+  dense: 128
   output: 2
 
 train:
