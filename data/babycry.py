@@ -9,6 +9,15 @@ import utils.utility as utility
 from tensorflow import keras
 
 
+def tmp_save_audio(audio, path, sr=16000):
+    os.makedirs(os.path.join(os.getcwd(), "batch_audio"), exist_ok=True)
+    path = os.path.join(
+        os.getcwd(), "batch_audio", path.split("/")[-1].split(".")[0] + ".wav"
+    )
+    sf.write(path, audio, sr)
+    return path
+
+
 def augment_data(speech_path, irfile_path):
     speech, fs_s = sf.read(speech_path)
 
@@ -53,6 +62,12 @@ def augment_data(speech_path, irfile_path):
     if maxval >= 1:
         amp_ratio = 0.99 / maxval
         speech = speech * amp_ratio
+
+    # stereo to mono
+    if speech.shape[0] == 2:
+        speech = speech.sum(axis=0) / 2
+
+    print(speech.shape)
 
     return speech
 
@@ -112,10 +127,17 @@ class BabyCry(keras.utils.Sequence):
         batch = self.df.iloc[index * self.batch_size : (index + 1) * self.batch_size]
 
         if self.spec_extraction != None:
+            tmp_audio_batch = [
+                tmp_save_audio(augment_audio(x, self.rir_dir, self.augment), x)
+                for x in batch["path"]
+            ]
             audio_batch = [
                 np.asarray(self.spec_extraction(path, self.options.input_size)[0])
                 for path in batch["path"]
             ]
+            for x in tmp_audio_batch:
+                os.remove(x)
+
             longest = 0
             for audio in audio_batch:
                 if audio.shape[0] > longest:
