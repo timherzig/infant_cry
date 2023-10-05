@@ -8,11 +8,17 @@ import utils.utility as utility
 
 from tensorflow import keras
 
+random_number = random.randint(0, 100000)
+
 
 def tmp_save_audio(audio, path, sr=16000):
-    os.makedirs(os.path.join(os.getcwd(), "batch_audio"), exist_ok=True)
+    os.makedirs(
+        os.path.join(os.getcwd(), f"batch_audio_{random_number}"), exist_ok=True
+    )
     path = os.path.join(
-        os.getcwd(), "batch_audio", path.split("/")[-1].split(".")[0] + ".wav"
+        os.getcwd(),
+        f"batch_audio_{random_number}",
+        path.split("/")[-1].split(".")[0] + ".wav",
     )
     sf.write(path, audio, sr)
     return path
@@ -43,15 +49,16 @@ def augment_data(speech_path, irfile_path):
             IR = IR[0:fs_s, :]
         else:
             zeros_len = fs_s - IR_length
-            zeros_lis = np.zeros([zeros_len, 2])
+            zeros_lis = np.zeros([zeros_len])
             IR = np.concatenate([IR, zeros_lis])
 
         if np.issubdtype(IR.dtype, np.integer):
             IR = utility.pcm2float(IR, "float32")
-        temp0 = utility.smart_convolve(speech, IR[:, 0])
-        temp1 = utility.smart_convolve(speech, IR[:, 1])
+        # temp0 = utility.smart_convolve(speech, IR[:, 0])
+        # temp1 = utility.smart_convolve(speech, IR[:, 1])
 
-        temp = np.transpose(np.concatenate(([temp0], [temp1]), axis=0))
+        # temp = np.transpose(np.concatenate(([temp0], [temp1]), axis=0))
+        temp = utility.smart_convolve(speech, IR)
 
         speech = np.array(temp)
 
@@ -62,12 +69,6 @@ def augment_data(speech_path, irfile_path):
     if maxval >= 1:
         amp_ratio = 0.99 / maxval
         speech = speech * amp_ratio
-
-    # stereo to mono
-    if speech.shape[0] == 2:
-        speech = speech.sum(axis=0) / 2
-
-    print(speech.shape)
 
     return speech
 
@@ -138,6 +139,8 @@ class BabyCry(keras.utils.Sequence):
             for x in tmp_audio_batch:
                 os.remove(x)
 
+            os.rmdir(os.path.join(os.getcwd(), f"batch_audio_{random_number}"))
+
             longest = 0
             for audio in audio_batch:
                 if audio.shape[0] > longest:
@@ -155,7 +158,7 @@ class BabyCry(keras.utils.Sequence):
 
         else:
             audio_batch = [
-                augment_audio(path, self.rar_dir, self.augment)
+                augment_audio(path, self.rir_dir, self.augment)
                 for path in batch["path"]
             ]
 
