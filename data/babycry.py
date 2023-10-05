@@ -179,9 +179,10 @@ class BabyCry(keras.utils.Sequence):
             [[1.0, 0.0] if label == "J" else [0.0, 1.0] for label in batch["label"]]
         )
 
-        # print(f"audio_batch shape: {audio_batch.shape}")
-        # print(f"label_batch shape: {label_batch.shape}")
         if self.batch_size == 1:
             audio_batch = audio_batch[0]
 
         return audio_batch, label_batch
+
+    def on_epoch_end(self):
+        self.df = self.df.sample(frac=1).reset_index(drop=True)
