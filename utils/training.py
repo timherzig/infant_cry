@@ -83,7 +83,7 @@ def train_single(
         callbacks=[
             WandbMetricsLogger(),
             WandbModelCheckpoint(save_dir, monitor="val_loss", mode="min"),
-            tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10),
+            # tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10),
         ],
     )
 
@@ -91,6 +91,5 @@ def train_single(
         test_dataset,
         batch_size=config.train.batch_size,
     )
-    
-    return loss, f1, acc
 
+    return loss, f1, acc
