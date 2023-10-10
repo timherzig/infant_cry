@@ -2,7 +2,7 @@ data:
   dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
   splits: ['train', 'val', 'test']
   spec: False
-  augment: 0.5
+  augment: 1.0
   rir_dir: '/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs'
 
 model:
@@ -17,12 +17,12 @@ model:
   dropout: 0.5
   bi_lstm:
     use: True
-    units: 2
-  dense: 4
+    units: 8
+  dense: 16
   output: 2
 
 train:
   epochs: 20
-  batch_size: 16
+  batch_size: 8
   optimizer: 'adam'
   learning_rate: 0.0001
