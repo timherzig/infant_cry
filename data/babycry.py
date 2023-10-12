@@ -25,9 +25,11 @@ def tmp_save_audio(audio, path, sr=16000):
 
 
 def augment_data(speech_path, irfile_path):
-    speech, fs_s = sf.read(speech_path)
-
+    speech, fs_s = sf.read(speech_path, dtype="float64")
     speech_length = speech.shape[0]
+    speech = (speech - np.min(speech)) / (np.max(speech) - np.min(speech))  # normalize
+    noise = np.random.normal(0, 0.1, speech_length)
+    speech = speech + noise  # add noise
 
     if speech_length > 96000:
         speech = speech[0:96000]
