@@ -32,6 +32,7 @@ def main(args):
     loss, f1, acc = train_single(None, None, args, config, save_dir)
 
     with open(os.path.join(save_dir, "results.txt"), "w") as f:
+        f.write(f"Model: {name} test set results: \n")
         f.write(f"Loss: {loss}\n")
         f.write(f"F1: {f1}\n")
         f.write(f"Acc: {acc}\n")
