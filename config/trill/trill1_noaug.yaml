@@ -2,9 +2,11 @@ data:
   dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
   splits: ['train', 'val', 'test']
   spec: False
+  augment: 0.0
+  rir_dir: '/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs'
 
 model:
-  name: 'trill1'
+  name: 'trill'
   trill: 
     hub_path: 'https://tfhub.dev/google/trillsson1/1'
     trainable: False
@@ -17,6 +19,6 @@ model:
 
 train:
   epochs: 100
-  batch_size: 8
+  batch_size: 32
   optimizer: 'adam'
   learning_rate: 0.0001

@@ -34,7 +34,6 @@ def augment_data(speech_path, irfile_path):
 
     if speech_length > 96000:
         speech = speech[0:96000]
-        # sf.write(process_full_path,IR,fs_s)
     else:
         zeros_len = 96000 - speech_length
         zeros_lis = np.zeros(zeros_len)
@@ -57,10 +56,6 @@ def augment_data(speech_path, irfile_path):
 
         if np.issubdtype(IR.dtype, np.integer):
             IR = utility.pcm2float(IR, "float32")
-        # temp0 = utility.smart_convolve(speech, IR[:, 0])
-        # temp1 = utility.smart_convolve(speech, IR[:, 1])
-
-        # temp = np.transpose(np.concatenate(([temp0], [temp1]), axis=0))
         temp = utility.smart_convolve(speech, IR)
 
         speech = np.array(temp)

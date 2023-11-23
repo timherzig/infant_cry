@@ -2,13 +2,10 @@ import tensorflow as tf
 
 from keras import losses
 
-# from tf.keras.metrics import F1Score
-from wandb.keras import WandbMetricsLogger, WandbModelCheckpoint
-
-from model.trill_extended import trill
-from model.jdc_extended import jdc
-from utils.metrics import get_f1
 from data.babycry import BabyCry
+from utils.metrics import get_f1
+from model.jdc_extended import jdc
+from model.trill_extended import trill
 
 
 def train_single(
@@ -19,16 +16,13 @@ def train_single(
     save_dir: str,
 ):
     # Initialize model
-    if args.checkpoint == None:
-        if config.model.name == "trill":
-            model = trill(config)
-            spec_extraction = options = None
-            print(f"Got TRILL model: {model}")
-        elif config.model.name == "jdc":
-            model, spec_extraction, options = jdc(config)
-            print(f"Got JDC model: {model}")
-    else:
-        model = tf.keras.models.load_model(args.checkpoint)
+    if config.model.name == "trill":
+        model = trill(config)
+        spec_extraction = options = None
+        print(f"Got TRILL model: {model}")
+    elif config.model.name == "jdc":
+        model, spec_extraction, options = jdc(config)
+        print(f"Got JDC model: {model}")
 
     model.compile(
         optimizer=config.train.optimizer,
@@ -81,15 +75,13 @@ def train_single(
         validation_data=val_dataset,
         epochs=config.train.epochs,
         batch_size=config.train.batch_size,
-        callbacks=[
-            WandbMetricsLogger(),
-            WandbModelCheckpoint(save_dir, monitor="val_loss", mode="min"),
-        ],
     )
 
     loss, f1, acc = model.evaluate(
         test_dataset,
         batch_size=config.train.batch_size,
     )
+
+    model.save_weights(f"{save_dir}/model.h5")
 
     return loss, f1, acc

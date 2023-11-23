@@ -168,3 +168,5 @@ wandb/
 batch_audio*
 
 slurm/
+
+trained_models/

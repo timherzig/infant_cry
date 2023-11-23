@@ -32,6 +32,15 @@ class JDC(layers.Layer):
         jdc_out = self.jdc_model(input)
         return jdc_out
 
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "jdc_model": self.jdc_model,
+            }
+        )
+        return config
+
 
 def jdc(config):
     options = Options(config)
@@ -39,21 +48,16 @@ def jdc(config):
     pitch_range = np.arange(38, 83 + 1.0 / options.resolution, 1.0 / options.resolution)
     pitch_range = np.concatenate([np.zeros(1), pitch_range])
 
-    # input = layers.Input(shape=(options.input_size, options.num_spec, 1))
-
     # JDC model
     jdc_model = melody_ResNet_joint_add(options)
     jdc_model.load_weights(os.path.join(os.getcwd(), config.model.jdc.model_path))
     jdc_model.trainable = config.model.jdc.trainable
 
-    jdc_model.summary()
+    # jdc_model.summary()
 
     jdc_model = JDC(jdc_model)
 
     input = layers.Input(shape=(None, options.input_size, options.num_spec, 1))
-
-    # print("JDC extended model input shape:", input.shape)
-    # print(f"type jdc: {type(jdc_model)}")
 
     embeddings = layers.TimeDistributed(jdc_model)(input)
     x = layers.Dropout(config.model.dropout)(embeddings[0])  # embeddings
