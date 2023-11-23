@@ -1,4 +1,5 @@
 import os
+import shutil
 import random
 import librosa
 import numpy as np
@@ -28,7 +29,7 @@ def augment_data(speech_path, irfile_path):
     speech, fs_s = sf.read(speech_path, dtype="float64")
     speech_length = speech.shape[0]
     speech = (speech - np.min(speech)) / (np.max(speech) - np.min(speech))  # normalize
-    noise = np.random.normal(0, 0.1, speech_length)
+    noise = np.random.normal(0, 0.01, speech_length)
     speech = speech + noise  # add noise
 
     if speech_length > 96000:
@@ -104,6 +105,7 @@ class BabyCry(keras.utils.Sequence):
         options=None,
         augment=0,
         rir_dir=None,
+        save_audio=False,
     ):
         self.dir = dir
         self.spec = spec
@@ -122,6 +124,9 @@ class BabyCry(keras.utils.Sequence):
         self.df_len = len(self.df.index)
         self.indexes = np.arange(self.df_len)
         self.input_shape = input_shape
+        self.save_audio = save_audio
+        if not os.path.exists(save_audio):
+            os.makedirs(save_audio, exist_ok=True)
 
     def __len__(self):
         return int(np.floor(self.df_len / self.batch_size))
@@ -134,6 +139,12 @@ class BabyCry(keras.utils.Sequence):
                 tmp_save_audio(augment_audio(x, self.rir_dir, self.augment), x)
                 for x in batch["path"]
             ]
+
+            if type(self.save_audio) == str:
+                shutil.copy(tmp_audio_batch[0], self.save_audio)
+                if len(os.listdir(self.save_audio)) == 10:
+                    self.save_audio = False
+
             audio_batch = [
                 np.asarray(self.spec_extraction(path, self.options.input_size)[0])
                 for path in batch["path"]

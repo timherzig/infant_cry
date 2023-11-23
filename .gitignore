@@ -166,3 +166,5 @@ wandb/
 *code-server
 
 batch_audio*
+
+slurm/

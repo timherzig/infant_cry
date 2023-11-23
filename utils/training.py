@@ -61,6 +61,7 @@ def train_single(
         options=options,
         augment=config.data.augment,
         rir_dir=config.data.rir_dir,
+        save_audio=f"{save_dir}/example_train_audio",
     )
 
     test_dataset = BabyCry(
@@ -83,7 +84,6 @@ def train_single(
         callbacks=[
             WandbMetricsLogger(),
             WandbModelCheckpoint(save_dir, monitor="val_loss", mode="min"),
-            # tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10),
         ],
     )
 

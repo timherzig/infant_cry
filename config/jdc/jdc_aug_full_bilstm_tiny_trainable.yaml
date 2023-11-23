@@ -2,7 +2,7 @@ data:
   dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
   splits: ['train', 'val', 'test']
   spec: False
-  augment: 2.0
+  augment: 1.0
   rir_dir: '/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs'
 
 model:
