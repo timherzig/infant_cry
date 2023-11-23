@@ -1,5 +1,5 @@
 import os
-import wandb
+import shutil
 
 from omegaconf import OmegaConf
 
@@ -11,27 +11,37 @@ from utils.training import train_single
 def main(args):
     # Load config & initialize wandb
     config = OmegaConf.load(args.config)
-    os.makedirs("checkpoints", exist_ok=True)
-    name = (
-        config.model.name
-        + f'_{len([x for x in os.listdir("checkpoints") if config.model.name in x]) + 1}'
+    os.makedirs("./trained_models/", exist_ok=True)
+    name = args.config.split("/")[-1].split(".")[0]
+
+    save_dir = (
+        f"./trained_models/{config.data.dir.split('/')[-1]}/{config.model.name}/{name}"
     )
-    wandb.init(
-        project="trill_babycry",
-        config=config.train,
-        name=name,
-    )
-    save_dir = "checkpoints/" + name
-    os.makedirs(save_dir)
+
+    if name == "config":
+        save_dir = f"./trained_models/debug"
+
+    if os.path.exists(save_dir):
+        shutil.rmtree(save_dir)
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    print(f"Saving to {save_dir}")
     OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
-    test_dataset = BabyCry(
-        config.data.dir, "test", config.train.batch_size, config.data.spec
-    )
+    loss, f1, acc = train_single(None, None, args, config, save_dir)
 
-    train_single(None, None, test_dataset, args, config, save_dir)
+    with open(os.path.join(save_dir, "results.txt"), "w") as f:
+        f.write(f"Model: {name} test set results: \n")
+        f.write(f"Loss: {loss}\n")
+        f.write(f"F1: {f1}\n")
+        f.write(f"Acc: {acc}\n")
+        f.close()
 
     print(f"Done! Model saved to {save_dir}")
+    print(f"Loss: {loss}")
+    print(f"F1: {f1}")
+    print(f"Acc: {acc}")
 
 
 if __name__ == "__main__":

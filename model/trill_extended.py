@@ -5,6 +5,7 @@ from keras import layers, losses
 
 
 def trill(config):
+    config = config.model
     input = layers.Input(shape=(None,))
     m = hub.KerasLayer(config.trill.hub_path, trainable=config.trill.trainable)
 

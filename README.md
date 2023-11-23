@@ -19,4 +19,12 @@ with the config linking to compatible data.
 
 # Results
 
-Training using the configuration found in 'config/config_cluster.yaml' the model achieves an **F1 score of 0.8977** on previously unseen data after 20 epochs. This model was trained on non-augmented data, with a batch size of 32 and a learning rate of 0.0001. The model was trained on a single GPU (RTXA6000 48GB), and can be found in checkpoints/trill1_22. Other experiments were run using augmented data which previously had led to improved performance. Augmentation methods can be found the repository https://github.com/timherzig/speech_augment.
+Training using the configuration found in 'config/config_cluster.yaml' the model achieves an **F1 score of 0.8977** on previously unseen data after 20 epochs. This model was trained on non-augmented data, with a batch size of 32 and a learning rate of 0.0001. The model was trained on a single GPU (RTXA6000 48GB). Other experiments were run using augmented data which previously had led to improved performance. Augmentation methods can be found the repository https://github.com/timherzig/speech_augment.
+
+
+## Nov. 2023
+
+|Config|Test F1|
+|:---:|:---:|
+|`config/trill/trill1_noaug.yaml`||
+|`config/jdc/jdc_noaug_bilstm.yaml`||

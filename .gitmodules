@@ -1,0 +1,3 @@
+[submodule "model/melodyExtraction_JDC"]
+	path = model/melodyExtraction_JDC
+	url = https://github.com/keums/melodyExtraction_JDC

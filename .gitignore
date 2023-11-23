@@ -164,3 +164,9 @@ checkpoints/
 wandb/
 
 *code-server
+
+batch_audio*
+
+slurm/
+
+trained_models/
