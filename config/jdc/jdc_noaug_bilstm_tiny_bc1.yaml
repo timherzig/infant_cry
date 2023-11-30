@@ -1,9 +1,9 @@
 data:
-  dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
+  dir: '/netscratch/herzig/datasets/BabyCry_augment_1'
   splits: ['train', 'val', 'test']
   spec: False
-  augment: 0
-  rir_dir: None
+  augment: 0.0
+  rir_dir: '/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs'
 
 model:
   name: 'jdc'
@@ -16,13 +16,13 @@ model:
     model_path: 'model/melodyExtraction_JDC/weights/ResNet_joint_add_L(CE_G).hdf5'
   dropout: 0.2
   bi_lstm:
-    use: False
-    units: 32
-  dense: 64
+    use: True
+    units: 4
+  dense: 4
   output: 2
 
 train:
-  epochs: 100
-  batch_size: 16
+  epochs: 50
+  batch_size: 32
   optimizer: 'adam'
   learning_rate: 0.0001

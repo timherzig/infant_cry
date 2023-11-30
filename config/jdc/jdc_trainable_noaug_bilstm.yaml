@@ -12,17 +12,17 @@ model:
     input_size: 31
     resolution: 16
     figureON: False
-    trainable: False
+    trainable: True
     model_path: 'model/melodyExtraction_JDC/weights/ResNet_joint_add_L(CE_G).hdf5'
   dropout: 0.2
   bi_lstm:
-    use: False
+    use: True
     units: 32
   dense: 64
   output: 2
 
 train:
   epochs: 100
-  batch_size: 16
+  batch_size: 8
   optimizer: 'adam'
   learning_rate: 0.0001

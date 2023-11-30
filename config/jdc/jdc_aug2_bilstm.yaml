@@ -22,7 +22,7 @@ model:
   output: 2
 
 train:
-  epochs: 20
+  epochs: 100
   batch_size: 32
   optimizer: 'adam'
   learning_rate: 0.0001
