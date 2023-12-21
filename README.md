@@ -28,7 +28,9 @@ Training using the configuration found in 'config/config_cluster.yaml' the model
 |:---:|:---:|
 |`config/trill/trill1_noaug.yaml`|0.818|
 |`config/trill/trill1_aug5.yaml`|0.477|
-|`config/jdcd j c/jdc_noaug_bilstm.yaml`|0.655|
+|`config/jdc/jdc_noaug_bilstm.yaml`|0.655|
+|`config/jdc/jdc_noaug_bilstm_bc1.yaml`|0.639|
+|`config/jdc/jdc_noaug_bilstm_tiny_bc1.yaml`|0.674|
 |`config/jdc/jdc_aug2_bilstm.yaml`|0.625|
 |`config/jdc/jdc_aug2_bilstm_tiny.yaml`|0.626|
 |`config/jdc/jdc_aug5_bilstm.yaml`|0.670|
