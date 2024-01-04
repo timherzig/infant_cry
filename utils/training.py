@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from keras import losses
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, TensorBoard
 
 from data.babycry import BabyCry
 from utils.metrics import get_f1
@@ -25,7 +25,7 @@ def train_single(
         model, spec_extraction, options = jdc(config)
         print(f"Got JDC model: {model}")
 
-    callbacks = []
+    callbacks = [TensorBoard(log_dir=f"{save_dir}/logs", histogram_freq=1)]
 
     if config.train.early_stopping:
         callbacks.append(
