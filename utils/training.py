@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from keras import losses
+from keras.callbacks import EarlyStopping
 
 from data.babycry import BabyCry
 from utils.metrics import get_f1
@@ -23,6 +24,17 @@ def train_single(
     elif config.model.name == "jdc":
         model, spec_extraction, options = jdc(config)
         print(f"Got JDC model: {model}")
+
+    callbacks = []
+
+    if config.train.early_stopping:
+        callbacks.append(
+            EarlyStopping(
+                monitor="val_loss",
+                patience=5,
+                restore_best_weights=True,
+            )
+        )
 
     model.compile(
         optimizer=config.train.optimizer,
@@ -75,6 +87,7 @@ def train_single(
         validation_data=val_dataset,
         epochs=config.train.epochs,
         batch_size=config.train.batch_size,
+        callbacks=callbacks,
     )
 
     loss, f1, acc = model.evaluate(

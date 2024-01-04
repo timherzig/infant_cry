@@ -63,10 +63,13 @@ def jdc(config):
     x = layers.Dropout(config.model.dropout)(embeddings[0])  # embeddings
 
     print(f"JDC output shape: {x.shape}")
+    # Delta features, how much the feature changes from one frame to the next
     delta = x[:, 1:, :] - x[:, :-1, :]
     delta = tf.concat([tf.zeros_like(delta[:, :1, :]), delta], axis=1)
     x = tf.stack([x, delta], axis=2)
     print(f"X after delta shape: {x.shape}")
+    # At this point we have a tensor containing stacked features and delta features for each frame
+    # x has the shape (batch_size, num_frames, 2, 31, 722)
 
     if config.model.bi_lstm.use:
         x = layers.Reshape((-1, x.shape[2] * x.shape[3] * x.shape[4]))(x)
@@ -76,6 +79,14 @@ def jdc(config):
             layers.LSTM(
                 config.model.bi_lstm.units,
             ),
+        )(x)
+        x = layers.Flatten()(x)
+    elif config.model.gru.use:
+        x = layers.Reshape((-1, x.shape[2] * x.shape[3] * x.shape[4]))(x)
+        x = layers.Dropout(config.model.dropout)(x)
+        print(f"Reshaped x: {x.shape}")
+        x = layers.GRU(
+            config.model.gru.units,
         )(x)
         x = layers.Flatten()(x)
     else:
