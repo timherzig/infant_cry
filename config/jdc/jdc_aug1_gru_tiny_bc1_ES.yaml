@@ -1,0 +1,31 @@
+data:
+  dir: '/netscratch/herzig/datasets/BabyCry_augment_1'
+  splits: ['train', 'val', 'test']
+  spec: False
+  augment: 0.1
+  rir_dir: '/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs'
+
+model:
+  name: 'jdc'
+  jdc:
+    num_spec: 513
+    input_size: 31
+    resolution: 16
+    figureON: False
+    trainable: False
+    model_path: 'model/melodyExtraction_JDC/weights/ResNet_joint_add_L(CE_G).hdf5'
+  dropout: 0.2
+  bi_lstm:
+    use: False
+  gru:
+    use: True
+    units: 4
+  dense: 4
+  output: 2
+
+train:
+  epochs: 100
+  batch_size: 32
+  optimizer: 'adam'
+  learning_rate: 0.0001
+  early_stopping: True
