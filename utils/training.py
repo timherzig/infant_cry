@@ -1,11 +1,8 @@
-import tensorflow as tf
-
 from keras import losses
 from keras.callbacks import EarlyStopping, TensorBoard
 
 from data.babycry import BabyCry
-from utils.metrics import get_f1
-from model.jdc_extended import jdc
+from utils.metrics import get_f1, weighted_ce_loss
 from model.trill_extended import trill
 
 
@@ -21,9 +18,6 @@ def train_single(
         model = trill(config)
         spec_extraction = options = None
         print(f"Got TRILL model: {model}")
-    elif config.model.name == "jdc":
-        model, spec_extraction, options = jdc(config)
-        print(f"Got JDC model: {model}")
 
     callbacks = [TensorBoard(log_dir=f"{save_dir}/logs", histogram_freq=1)]
 
@@ -36,14 +30,6 @@ def train_single(
             )
         )
 
-    model.compile(
-        optimizer=config.train.optimizer,
-        loss=losses.BinaryCrossentropy(),
-        metrics=[get_f1, "accuracy"],
-    )
-
-    model.summary()
-
     # Initialize datasets
     val_dataset = BabyCry(
         config.data.dir,
@@ -55,6 +41,7 @@ def train_single(
         options=options,
         augment=0,
         rir_dir=config.data.rir_dir,
+        mic_dir=config.data.mic_dir,
     )
 
     train_dataset = BabyCry(
@@ -67,8 +54,12 @@ def train_single(
         options=options,
         augment=config.data.augment,
         rir_dir=config.data.rir_dir,
+        mic_dir=config.data.mic_dir,
         save_audio=f"{save_dir}/example_train_audio",
     )
+
+    weights = train_dataset.get_weights()
+    print(f"Weights [J, G]: {weights}")
 
     test_dataset = BabyCry(
         config.data.dir,
@@ -79,7 +70,16 @@ def train_single(
         options=options,
         augment=0,
         rir_dir=config.data.rir_dir,
+        mic_dir=config.data.mic_dir,
     )
+
+    model.compile(
+        optimizer=config.train.optimizer,
+        loss=weighted_ce_loss(weights),
+        metrics=[get_f1, "accuracy"],
+    )
+
+    model.summary()
 
     # Train model
     model.fit(
