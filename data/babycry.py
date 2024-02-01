@@ -25,38 +25,36 @@ def tmp_save_audio(audio, path, sr=16000):
     return path
 
 
-def augment_data(speech_path, irfile_path):
+def augment_data(speech_path, irfile_path=None, mic_ir_file_path=None):
     speech, fs_s = sf.read(speech_path, dtype="float64")
+    if fs_s != 16000:
+        speech = librosa.resample(speech, fs_s, 16000)
+        fs_s = 16000
     speech_length = speech.shape[0]
     speech = (speech - np.min(speech)) / (np.max(speech) - np.min(speech))  # normalize
-    noise = np.random.normal(0, 0.01, speech_length)
-    speech = speech + noise  # add noise
+    # noise = np.random.normal(0, 0.01, speech_length)
+    # speech = speech + noise  # add noise
 
-    if speech_length > 96000:
-        speech = speech[0:96000]
-    else:
-        zeros_len = 96000 - speech_length
-        zeros_lis = np.zeros(zeros_len)
-        speech = np.concatenate([speech, zeros_lis])
-
-    if np.issubdtype(speech.dtype, np.integer):
-        speech = utility.pcm2float(speech, "float32")
     # convolution
-    if irfile_path:
+    if irfile_path != None:
         IR, fs_i = sf.read(irfile_path)
 
-        IR_length = IR.shape[0]
+        if fs_i != 16000:
+            IR = librosa.resample(IR, fs_i, 16000)
+            fs_i = 16000
 
-        if IR_length > fs_s:
-            IR = IR[0:fs_s, :]
-        else:
-            zeros_len = fs_s - IR_length
-            zeros_lis = np.zeros([zeros_len])
-            IR = np.concatenate([IR, zeros_lis])
-
-        if np.issubdtype(IR.dtype, np.integer):
-            IR = utility.pcm2float(IR, "float32")
         temp = utility.smart_convolve(speech, IR)
+
+        speech = np.array(temp)
+
+    if mic_ir_file_path != None:
+        mic_IR, fs_i = sf.read(mic_ir_file_path)
+
+        if fs_i != 16000:
+            mic_IR = librosa.resample(mic_IR, fs_i, 16000)
+            fs_i = 16000
+
+        temp = utility.smart_convolve(speech, mic_IR)
 
         speech = np.array(temp)
 
@@ -71,13 +69,22 @@ def augment_data(speech_path, irfile_path):
     return speech
 
 
-def augment_audio(audio_path, rar_dir, augment):
+def augment_audio(audio_path, rir_dir, mic_dir, augment):
     if np.random.random() >= augment:
         return librosa.load(audio_path, sr=16000)[0]
 
-    rar_path = os.path.join(rar_dir, random.choice(os.listdir(rar_dir)))
+    rir_path = (
+        os.path.join(rir_dir, random.choice(os.listdir(rir_dir)))
+        if np.random.random() >= 0.0
+        else None
+    )
+    mic_path = (
+        os.path.join(mic_dir, random.choice(os.listdir(mic_dir)))
+        if np.random.random() >= 0.0
+        else None
+    )
 
-    return augment_data(audio_path, rar_path)
+    return augment_data(audio_path, rir_path, mic_path)
 
 
 class BabyCry(keras.utils.Sequence):
@@ -100,6 +107,7 @@ class BabyCry(keras.utils.Sequence):
         options=None,
         augment=0,
         rir_dir=None,
+        mic_dir=None,
         save_audio=False,
     ):
         self.dir = dir
@@ -110,6 +118,7 @@ class BabyCry(keras.utils.Sequence):
         self.options = options
         self.augment = augment
         self.rir_dir = rir_dir
+        self.mic_dir = mic_dir
 
         self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
 
@@ -120,18 +129,26 @@ class BabyCry(keras.utils.Sequence):
         self.indexes = np.arange(self.df_len)
         self.input_shape = input_shape
         self.save_audio = save_audio
-        if not os.path.exists(save_audio):
-            os.makedirs(save_audio, exist_ok=True)
+        if not os.path.exists(self.save_audio):
+            os.makedirs(self.save_audio, exist_ok=True)
 
     def __len__(self):
         return int(np.floor(self.df_len / self.batch_size))
+
+    def get_weights(self):
+        j = len(self.df[self.df["label"] == "J"])
+        g = len(self.df[self.df["label"] == "G"])
+
+        return [g / (j + g), j / (j + g)]
 
     def __getitem__(self, index):
         batch = self.df.iloc[index * self.batch_size : (index + 1) * self.batch_size]
 
         if self.spec_extraction != None:
             tmp_audio_batch = [
-                tmp_save_audio(augment_audio(x, self.rir_dir, self.augment), x)
+                tmp_save_audio(
+                    augment_audio(x, self.rir_dir, self.mic_dir, self.augment), x
+                )
                 for x in batch["path"]
             ]
 
@@ -166,7 +183,7 @@ class BabyCry(keras.utils.Sequence):
 
         else:
             audio_batch = [
-                augment_audio(path, self.rir_dir, self.augment)
+                augment_audio(path, self.rir_dir, self.mic_dir, self.augment)
                 for path in batch["path"]
             ]
 
@@ -182,6 +199,40 @@ class BabyCry(keras.utils.Sequence):
                 audio_batch = np.array(
                     [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
                 )
+
+            if type(self.save_audio) == str:
+                org_audio = [
+                    augment_audio(path, None, None, 0.0) for path in batch["path"]
+                ]
+
+                sf.write(
+                    os.path.join(
+                        self.save_audio,
+                        str(
+                            len(
+                                [
+                                    i
+                                    for i in os.listdir(self.save_audio)
+                                    if not "org" in i
+                                ]
+                            )
+                        )
+                        + ".wav",
+                    ),
+                    audio_batch[0],
+                    16000,
+                )
+                sf.write(
+                    os.path.join(
+                        self.save_audio,
+                        str(len([i for i in os.listdir(self.save_audio) if "org" in i]))
+                        + "_org.wav",
+                    ),
+                    org_audio[0],
+                    16000,
+                )
+                if len(os.listdir(self.save_audio)) == 20:
+                    self.save_audio = False
 
         label_batch = np.asarray(
             [[1.0, 0.0] if label == "J" else [0.0, 1.0] for label in batch["label"]]

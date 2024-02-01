@@ -15,7 +15,6 @@ def trill(config):
     if config.bi_lstm.use:
         x = tf.expand_dims(x, axis=1)
         x = layers.Bidirectional(layers.LSTM(config.bi_lstm.units))(x)
-        # x = layers.Flatten()(x)
     else:
         x = layers.Flatten()(x)
         x = layers.Dense(config.dense, activation="relu")(x)
@@ -25,11 +24,10 @@ def trill(config):
     x = layers.Conv2D(filters=1, kernel_size=(3, 3), padding="same", activation="relu")(
         x
     )
-    # x = layers.MaxPooling2D(pool_size=(2,1))(x)
     x = layers.Flatten()(x)
 
     x = layers.Dense(config.dense, activation="relu")(x)
-    predictions = layers.Dense(config.output, activation="sigmoid")(x)
+    predictions = layers.Dense(config.output, activation="softmax")(x)
 
     trill_pretrained = tf.keras.Model(inputs=m.input, outputs=predictions)
 

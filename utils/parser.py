@@ -11,4 +11,10 @@ def parse_arguments():
         help="Path to config file",
     )
 
+    parser.add_argument(
+        "--gen_examples",
+        type=bool,
+        default=False,
+    )
+
     return parser.parse_args()
