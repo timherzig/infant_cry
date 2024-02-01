@@ -6,6 +6,7 @@ from omegaconf import OmegaConf
 from data.babycry import BabyCry
 from utils.parser import parse_arguments
 from utils.training import train_single
+from utils.gen_ir_examples import gen_examples
 
 
 def main(args):
@@ -47,4 +48,7 @@ def main(args):
 if __name__ == "__main__":
     args = parse_arguments()
 
-    main(args)
+    if args.gen_examples:
+        gen_examples()
+    else:
+        main(args)
