@@ -170,3 +170,5 @@ batch_audio*
 slurm/
 
 trained_models/
+
+ir_examples/
