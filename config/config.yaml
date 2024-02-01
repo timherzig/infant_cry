@@ -2,8 +2,9 @@ data:
   dir: '/netscratch/herzig/datasets/BabyCry_no_augment'
   splits: ['train', 'val', 'test']
   spec: False
-  augment: 0.0
+  augment: 1.0
   rir_dir: '/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs'
+  mic_dir: '/netscratch/herzig/datasets/mic_ir'
 
 model:
   name: 'trill'
@@ -22,3 +23,4 @@ train:
   batch_size: 8
   optimizer: 'adam'
   learning_rate: 0.0001
+  early_stopping: True
