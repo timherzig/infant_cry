@@ -1,5 +1,10 @@
 from keras import losses
-from keras.callbacks import EarlyStopping, TensorBoard
+from keras.callbacks import (
+    EarlyStopping,
+    TensorBoard,
+    ModelCheckpoint,
+    ReduceLROnPlateau,
+)
 
 from data.babycry import BabyCry
 from utils.metrics import get_f1, weighted_ce_loss
@@ -19,13 +24,21 @@ def train_single(
         spec_extraction = options = None
         print(f"Got TRILL model: {model}")
 
-    callbacks = [TensorBoard(log_dir=f"{save_dir}/logs", histogram_freq=1)]
+    callbacks = [
+        TensorBoard(log_dir=f"{save_dir}/logs", histogram_freq=1),
+        ModelCheckpoint(
+            ".mdl_wts.hdf5", save_best_only=True, monitor="val_loss", mode="min"
+        ),
+        ReduceLROnPlateau(
+            monitor="val_loss", factor=0.1, patience=5, min_lr=1e-7, verbose=1
+        ),
+    ]
 
     if config.train.early_stopping:
         callbacks.append(
             EarlyStopping(
                 monitor="val_loss",
-                patience=5,
+                patience=10,
                 restore_best_weights=True,
             )
         )
