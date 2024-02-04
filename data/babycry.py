@@ -112,6 +112,7 @@ class BabyCry(keras.utils.Sequence):
         spec_extraction=None,
         options=None,
         augment=0,
+        mix_up=0,
         rir_dir=None,
         mic_dir=None,
         save_audio=False,
@@ -125,6 +126,7 @@ class BabyCry(keras.utils.Sequence):
         self.augment = augment
         self.rir_dir = rir_dir
         self.mic_dir = mic_dir
+        self.mix_up = mix_up
 
         self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
 
@@ -164,8 +166,8 @@ class BabyCry(keras.utils.Sequence):
             [[1.0, 0.0] if label == "J" else [0.0, 1.0] for label in batch["label"]]
         )
 
-        if np.random.random() <= self.mixup:
-            batch2 = self.ds.sample(self.batch_size)
+        if np.random.random() <= self.mix_up:
+            batch2 = self.df.sample(self.batch_size)
             audio_batch2 = [
                 augment_audio(path, self.rir_dir, self.mic_dir, self.augment)
                 for path in batch2["path"]

@@ -69,6 +69,7 @@ def train_single(
         spec_extraction=spec_extraction,
         options=options,
         augment=config.data.augment,
+        mix_up=config.data.mix_up,
         rir_dir=config.data.rir_dir,
         mic_dir=config.data.mic_dir,
         save_audio=f"{save_dir}/example_train_audio",
@@ -90,7 +91,7 @@ def train_single(
     )
 
     model.compile(
-        optimizer=optimizers.Adam(lr=config.train.lr),
+        optimizer=optimizers.Adam(lr=config.train.learning_rate),
         loss=weighted_ce_loss(weights),
         metrics=[get_f1, "accuracy"],
     )

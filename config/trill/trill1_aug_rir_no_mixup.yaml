@@ -5,7 +5,7 @@ data:
   augment: 1.0
   rir_dir: /netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs
   mic_dir: /netscratch/herzig/datasets/mic_ir
-  mix_up: 0.8
+  mix_up: 0.0
 model:
   name: trill
   trill:
