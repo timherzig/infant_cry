@@ -1,4 +1,4 @@
-from keras import losses
+from keras import losses, optimizers
 from keras.callbacks import (
     EarlyStopping,
     TensorBoard,
@@ -27,10 +27,13 @@ def train_single(
     callbacks = [
         TensorBoard(log_dir=f"{save_dir}/logs", histogram_freq=1),
         ModelCheckpoint(
-            ".mdl_wts.hdf5", save_best_only=True, monitor="val_loss", mode="min"
+            f"{save_dir}/model/mdl_wts.hdf5",
+            save_best_only=True,
+            monitor="val_loss",
+            mode="min",
         ),
         ReduceLROnPlateau(
-            monitor="val_loss", factor=0.1, patience=5, min_lr=1e-7, verbose=1
+            monitor="val_loss", factor=0.5, patience=5, min_lr=1e-7, verbose=1
         ),
     ]
 
@@ -87,7 +90,7 @@ def train_single(
     )
 
     model.compile(
-        optimizer=config.train.optimizer,
+        optimizer=optimizers.Adam(lr=config.train.lr),
         loss=weighted_ce_loss(weights),
         metrics=[get_f1, "accuracy"],
     )
