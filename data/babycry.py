@@ -12,6 +12,12 @@ from tensorflow import keras
 random_number = random.randint(0, 100000)
 
 
+def mix_up(x1, y1, x2, y2, alpha=0.2):
+    x = alpha * x2 + (1 - alpha) * x1
+    y = alpha * y2 + (1 - alpha) * y1
+    return x, y
+
+
 def tmp_save_audio(audio, path, sr=16000):
     os.makedirs(
         os.path.join(os.getcwd(), f"batch_audio_{random_number}"), exist_ok=True
@@ -28,7 +34,7 @@ def tmp_save_audio(audio, path, sr=16000):
 def augment_data(speech_path, irfile_path=None, mic_ir_file_path=None):
     speech, fs_s = sf.read(speech_path, dtype="float64")
     if fs_s != 16000:
-        speech = librosa.resample(speech, fs_s, 16000)
+        speech = librosa.resample(speech, orig_sr=fs_s, target_sr=16000)
         fs_s = 16000
     speech_length = speech.shape[0]
     speech = (speech - np.min(speech)) / (np.max(speech) - np.min(speech))  # normalize
@@ -40,7 +46,7 @@ def augment_data(speech_path, irfile_path=None, mic_ir_file_path=None):
         IR, fs_i = sf.read(irfile_path)
 
         if fs_i != 16000:
-            IR = librosa.resample(IR, fs_i, 16000)
+            IR = librosa.resample(IR, orig_sr=fs_i, target_sr=16000)
             fs_i = 16000
 
         temp = utility.smart_convolve(speech, IR)
@@ -51,7 +57,7 @@ def augment_data(speech_path, irfile_path=None, mic_ir_file_path=None):
         mic_IR, fs_i = sf.read(mic_ir_file_path)
 
         if fs_i != 16000:
-            mic_IR = librosa.resample(mic_IR, fs_i, 16000)
+            mic_IR = librosa.resample(mic_IR, orig_sr=fs_i, target_sr=16000)
             fs_i = 16000
 
         temp = utility.smart_convolve(speech, mic_IR)
@@ -75,12 +81,12 @@ def augment_audio(audio_path, rir_dir, mic_dir, augment):
 
     rir_path = (
         os.path.join(rir_dir, random.choice(os.listdir(rir_dir)))
-        if np.random.random() >= 0.0
+        if np.random.random() >= 0.1
         else None
     )
     mic_path = (
         os.path.join(mic_dir, random.choice(os.listdir(mic_dir)))
-        if np.random.random() >= 0.0
+        if np.random.random() >= 0.1
         else None
     )
 
@@ -144,99 +150,69 @@ class BabyCry(keras.utils.Sequence):
     def __getitem__(self, index):
         batch = self.df.iloc[index * self.batch_size : (index + 1) * self.batch_size]
 
-        if self.spec_extraction != None:
-            tmp_audio_batch = [
-                tmp_save_audio(
-                    augment_audio(x, self.rir_dir, self.mic_dir, self.augment), x
-                )
-                for x in batch["path"]
-            ]
+        audio_batch = [
+            augment_audio(path, self.rir_dir, self.mic_dir, self.augment)
+            for path in batch["path"]
+        ]
 
-            if type(self.save_audio) == str:
-                shutil.copy(tmp_audio_batch[0], self.save_audio)
-                if len(os.listdir(self.save_audio)) == 10:
-                    self.save_audio = False
-
-            audio_batch = [
-                np.asarray(self.spec_extraction(path, self.options.input_size)[0])
-                for path in batch["path"]
-            ]
-            for x in tmp_audio_batch:
-                os.remove(x)
-
-            os.rmdir(os.path.join(os.getcwd(), f"batch_audio_{random_number}"))
-
-            longest = 0
-            for audio in audio_batch:
-                if audio.shape[0] > longest:
-                    longest = audio.shape[0]
-
-            # pad all audio to the same length
-            audio_batch = np.array(
-                [
-                    np.pad(
-                        audio, ((0, longest - audio.shape[0]), (0, 0), (0, 0), (0, 0))
-                    )
-                    for audio in audio_batch
-                ]
-            )
-
-        else:
-            audio_batch = [
-                augment_audio(path, self.rir_dir, self.mic_dir, self.augment)
-                for path in batch["path"]
-            ]
-
-            if self.spec:
-                audio_batch = [
-                    librosa.feature.melspectrogram(
-                        x, sr=16000, n_mels=self.input_shape[1], fmax=8000
-                    )[: self.input_shape[0]]
-                    for x in audio_batch
-                ]
-            else:
-                max_len = max(len(row) for row in audio_batch)
-                audio_batch = np.array(
-                    [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
-                )
-
-            if type(self.save_audio) == str:
-                org_audio = [
-                    augment_audio(path, None, None, 0.0) for path in batch["path"]
-                ]
-
-                sf.write(
-                    os.path.join(
-                        self.save_audio,
-                        str(
-                            len(
-                                [
-                                    i
-                                    for i in os.listdir(self.save_audio)
-                                    if not "org" in i
-                                ]
-                            )
-                        )
-                        + ".wav",
-                    ),
-                    audio_batch[0],
-                    16000,
-                )
-                sf.write(
-                    os.path.join(
-                        self.save_audio,
-                        str(len([i for i in os.listdir(self.save_audio) if "org" in i]))
-                        + "_org.wav",
-                    ),
-                    org_audio[0],
-                    16000,
-                )
-                if len(os.listdir(self.save_audio)) == 20:
-                    self.save_audio = False
+        max_len = max(len(row) for row in audio_batch)
+        audio_batch = np.array(
+            [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
+        )
 
         label_batch = np.asarray(
             [[1.0, 0.0] if label == "J" else [0.0, 1.0] for label in batch["label"]]
         )
+
+        if np.random.random() <= self.mixup:
+            batch2 = self.ds.sample(self.batch_size)
+            audio_batch2 = [
+                augment_audio(path, self.rir_dir, self.mic_dir, self.augment)
+                for path in batch2["path"]
+            ]
+            max_len2 = max(len(row) for row in audio_batch2)
+            if max_len2 > max_len:
+                max_len = max_len2
+                audio_batch = np.array(
+                    [np.pad(row, (0, max_len - len(row))) for row in audio_batch]
+                )
+            audio_batch2 = np.array(
+                [np.pad(row, (0, max_len - len(row))) for row in audio_batch2]
+            )
+            label_batch2 = np.asarray(
+                [
+                    [1.0, 0.0] if label == "J" else [0.0, 1.0]
+                    for label in batch2["label"]
+                ]
+            )
+
+            audio_batch, label_batch = mix_up(
+                audio_batch, label_batch, audio_batch2, label_batch2
+            )
+
+        if type(self.save_audio) == str:
+            org_audio = [augment_audio(path, None, None, 0.0) for path in batch["path"]]
+
+            sf.write(
+                os.path.join(
+                    self.save_audio,
+                    str(len([i for i in os.listdir(self.save_audio) if not "org" in i]))
+                    + ".wav",
+                ),
+                audio_batch[0],
+                16000,
+            )
+            sf.write(
+                os.path.join(
+                    self.save_audio,
+                    str(len([i for i in os.listdir(self.save_audio) if "org" in i]))
+                    + "_org.wav",
+                ),
+                org_audio[0],
+                16000,
+            )
+            if len(os.listdir(self.save_audio)) == 20:
+                self.save_audio = False
 
         if self.batch_size == 1:
             audio_batch = audio_batch[0]
