@@ -1,3 +1,7 @@
+import os
+import itertools
+import pandas as pd
+
 from keras import losses, optimizers
 from keras.callbacks import (
     EarlyStopping,
@@ -62,7 +66,7 @@ def train_single(
 
     train_dataset = BabyCry(
         config.data.dir,
-        "train",
+        "train" if train_speakers is None else "train_loso",
         config.train.batch_size,
         config.data.spec,
         train_speakers,
@@ -70,6 +74,7 @@ def train_single(
         options=options,
         augment=config.data.augment,
         mix_up=config.data.mix_up,
+        mix_up_alpha=config.data.mix_up_alpha,
         rir_dir=config.data.rir_dir,
         mic_dir=config.data.mic_dir,
         save_audio=f"{save_dir}/example_train_audio",
@@ -116,6 +121,99 @@ def train_single(
         batch_size=config.train.batch_size,
     )
 
-    model.save_weights(f"{save_dir}/model.h5")
+    dev_loss, dev_f1, dev_acc = model.evaluate(
+        val_dataset,
+        batch_size=config.train.batch_size,
+    )
 
-    return loss, f1, acc
+    if train_speakers is None:
+        model.save_weights(f"{save_dir}/model.h5")
+    # model.save_weights(f"{save_dir}/model.h5")
+
+    return loss, f1, acc, dev_loss, dev_f1, dev_acc
+
+
+def train_loso(
+    args: dict,
+    config: dict,
+    save_dir: str,
+):
+    val_speakers = pd.read_csv(os.path.join(config.data.dir, "val.csv"))["id"].unique()
+    ger_val_speakers = [s for s in val_speakers if s.startswith("G")]
+    jpn_val_speakers = [s for s in val_speakers if s.startswith("J")]
+
+    if len(ger_val_speakers) > len(jpn_val_speakers):
+        # ger_val_speakers = ger_val_speakers[: len(jpn_val_speakers)]
+        jpn_val_speakers = list(
+            itertools.islice(itertools.cycle(jpn_val_speakers), len(ger_val_speakers))
+        )
+    elif len(jpn_val_speakers) > len(ger_val_speakers):
+        # jpn_val_speakers = jpn_val_speakers[: len(ger_val_speakers)]
+        ger_val_speakers = list(
+            itertools.islice(itertools.cycle(ger_val_speakers), len(jpn_val_speakers))
+        )
+
+    loso_results = {}
+
+    for i in range(0, len(ger_val_speakers) - 1, 2):
+        print(
+            f"Training for GER/JPN val speaker {ger_val_speakers[i]}/{ger_val_speakers[i+1]}/{jpn_val_speakers[i]}/{jpn_val_speakers[i+1]}"
+        )
+        val_speakers = [
+            s
+            for s in itertools.chain(ger_val_speakers, jpn_val_speakers)
+            if (
+                s != ger_val_speakers[i]
+                and s != jpn_val_speakers[i]
+                and s != ger_val_speakers[i + 1]
+                and s != jpn_val_speakers[i + 1]
+            )
+        ]
+        print(f"Val speakers: {val_speakers}")
+        loss, f1, acc, dev_loss, dev_f1, dev_acc = train_single(
+            [
+                ger_val_speakers[i],
+                jpn_val_speakers[i],
+                ger_val_speakers[i + 1],
+                jpn_val_speakers[i + 1],
+            ],
+            val_speakers,
+            args,
+            config,
+            f"{save_dir}/val_{ger_val_speakers[i]}_{ger_val_speakers[i+1]}_{jpn_val_speakers[i]}_{jpn_val_speakers[i+1]}",
+        )
+
+        loso_results[
+            f"{ger_val_speakers[i]}_{ger_val_speakers[i+1]}_{jpn_val_speakers[i]}_{jpn_val_speakers[i+1]}"
+        ] = [loss, f1, acc, dev_loss, dev_f1, dev_acc]
+
+    avg_loss = sum([v[0] for v in loso_results.values()]) / len(loso_results)
+    avg_f1 = sum([v[1] for v in loso_results.values()]) / len(loso_results)
+    avg_acc = sum([v[2] for v in loso_results.values()]) / len(loso_results)
+
+    avg_dev_loss = sum([v[3] for v in loso_results.values()]) / len(loso_results)
+    avg_dev_f1 = sum([v[4] for v in loso_results.values()]) / len(loso_results)
+    avg_dev_acc = sum([v[5] for v in loso_results.values()]) / len(loso_results)
+
+    max_f1 = max([v[1] for v in loso_results.values()])
+    min_f1 = min([v[1] for v in loso_results.values()])
+    max_val_f1 = max([v[4] for v in loso_results.values()])
+    min_val_f1 = min([v[4] for v in loso_results.values()])
+
+    print(f"Average test loss: {avg_loss}, f1: {avg_f1}, acc: {avg_acc} \n")
+    print(f"Average dev loss: {avg_dev_loss}, f1: {avg_dev_f1}, acc: {avg_dev_acc} \n")
+    print(f"Max f1: {max_f1}, max val f1: {max_val_f1} \n")
+    print(f"Min f1: {min_f1}, min val f1: {min_val_f1} \n")
+
+    return (
+        avg_loss,
+        avg_f1,
+        avg_acc,
+        avg_dev_loss,
+        avg_dev_f1,
+        avg_dev_acc,
+        max_f1,
+        max_val_f1,
+        min_f1,
+        min_val_f1,
+    )

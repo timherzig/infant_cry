@@ -17,4 +17,10 @@ def parse_arguments():
         default=False,
     )
 
+    parser.add_argument(
+        "--train_loso",
+        type=bool,
+        default=False,
+    )
+
     return parser.parse_args()

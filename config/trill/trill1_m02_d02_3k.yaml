@@ -1,5 +1,5 @@
 data:
-  dir: /netscratch/herzig/datasets/BabyCry_no_augment
+  dir: /netscratch/herzig/datasets/BabyCry_augment_1
   splits: ['train', 'val', 'test']
   spec: false
   augment: 0.0
@@ -19,7 +19,7 @@ model:
   dense: 64
   output: 2
 train:
-  epochs: 1
+  epochs: 100
   batch_size: 8
   optimizer: adam
   learning_rate: 0.001

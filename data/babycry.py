@@ -13,6 +13,7 @@ random_number = random.randint(0, 100000)
 
 
 def mix_up(x1, y1, x2, y2, alpha=0.2):
+    alpha = np.random.beta(alpha, alpha)
     x = alpha * x2 + (1 - alpha) * x1
     y = alpha * y2 + (1 - alpha) * y1
     return x, y
@@ -113,6 +114,7 @@ class BabyCry(keras.utils.Sequence):
         options=None,
         augment=0,
         mix_up=0,
+        mix_up_alpha=0.2,
         rir_dir=None,
         mic_dir=None,
         save_audio=False,
@@ -127,11 +129,30 @@ class BabyCry(keras.utils.Sequence):
         self.rir_dir = rir_dir
         self.mic_dir = mic_dir
         self.mix_up = mix_up
+        self.mix_up_alpha = mix_up_alpha
 
-        self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
+        if split != "train_loso":
+            self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
+            print(f"Length of {split}: {len(self.df.index)}")
 
-        if speakers != None:
-            self.df = self.df[self.df["speaker"].isin(speakers)]
+            if speakers != None:
+                self.df = self.df[self.df["id"].isin(speakers)]
+
+            print(f"Length of {split} after filtering: {len(self.df.index)}")
+        else:
+            train = pd.read_csv(os.path.join(dir, "train.csv"))
+            print(f"Length of train: {len(train.index)}")
+            val = pd.read_csv(os.path.join(dir, "val.csv"))
+            print(f"Length of val: {len(val.index)}")
+            val = val[val["id"].isin(speakers)]
+            print(f"Length of val after filtering: {len(val.index)}")
+            self.df = pd.concat(
+                [
+                    train,
+                    val,
+                ]
+            )
+            print(f"Length of train + val: {len(self.df.index)}")
 
         self.df_len = len(self.df.index)
         self.indexes = np.arange(self.df_len)
@@ -189,7 +210,7 @@ class BabyCry(keras.utils.Sequence):
             )
 
             audio_batch, label_batch = mix_up(
-                audio_batch, label_batch, audio_batch2, label_batch2
+                audio_batch, label_batch, audio_batch2, label_batch2, self.mix_up_alpha
             )
 
         if type(self.save_audio) == str:

@@ -6,7 +6,7 @@ data:
   rir_dir: /netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs
   mic_dir: /netscratch/herzig/datasets/mic_ir
   mix_up: 1.0
-  mix_up_alpha: 0.2
+  mix_up_alpha: 0.4
 model:
   name: trill
   trill:
@@ -19,7 +19,7 @@ model:
   dense: 64
   output: 2
 train:
-  epochs: 1
+  epochs: 100
   batch_size: 8
   optimizer: adam
   learning_rate: 0.001
