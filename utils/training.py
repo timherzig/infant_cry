@@ -91,8 +91,12 @@ def train_single(
     )
 
     model.compile(
-        optimizer=optimizers.Adam(lr=config.train.learning_rate),
-        loss=weighted_ce_loss(weights),
+        optimizer=optimizers.Adam(learning_rate=config.train.learning_rate),
+        loss=(
+            weighted_ce_loss(weights)
+            if config.data.mix_up <= 0.0
+            else losses.CategoricalCrossentropy()
+        ),
         metrics=[get_f1, "accuracy"],
     )
 
