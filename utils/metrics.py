@@ -14,12 +14,14 @@ def get_f1(y_true, y_pred):  # taken from old keras source code
 
 def weighted_ce_loss(class_weights):
     class_weights = tf.constant(class_weights, dtype=tf.float32)
+    loss_fn = tf.keras.losses.CategoricalCrossentropy(from_logits=False, axis=-1)
 
     def loss(y_true, y_pred):
         weights = tf.reduce_sum(class_weights * y_true, axis=1)
-        unweighted_losses = tf.nn.softmax_cross_entropy_with_logits(
-            y_true, y_pred, axis=-1
-        )
+        # unweighted_losses = tf.nn.softmax_cross_entropy_with_logits(
+        #     y_true, y_pred, axis=-1
+        # )
+        unweighted_losses = loss_fn(y_true, y_pred)
         weighted_losses = unweighted_losses * weights
         return tf.reduce_mean(weighted_losses)
 
