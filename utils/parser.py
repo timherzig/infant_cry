@@ -23,4 +23,10 @@ def parse_arguments():
         default=False,
     )
 
+    parser.add_argument(
+        "--test",
+        type=bool,
+        default=False,
+    )
+
     return parser.parse_args()

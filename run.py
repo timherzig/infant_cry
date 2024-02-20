@@ -23,10 +23,7 @@ def main(args):
     if name == "config":
         save_dir = f"./trained_models/debug" + ("/loso" if args.train_loso else "")
 
-    if args.train_loso:
-        config.train.epochs = 10
-
-    if os.path.exists(save_dir):
+    if os.path.exists(save_dir) and not args.train_loso:
         shutil.rmtree(save_dir)
 
     os.makedirs(save_dir, exist_ok=True)

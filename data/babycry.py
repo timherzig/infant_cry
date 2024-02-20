@@ -144,14 +144,13 @@ class BabyCry(keras.utils.Sequence):
             print(f"Length of train: {len(train.index)}")
             val = pd.read_csv(os.path.join(dir, "val.csv"))
             print(f"Length of val: {len(val.index)}")
-            val = val[val["id"].isin(speakers)]
-            print(f"Length of val after filtering: {len(val.index)}")
             self.df = pd.concat(
                 [
                     train,
                     val,
                 ]
             )
+            self.df = self.df[self.df["id"].isin(speakers)]
             print(f"Length of train + val: {len(self.df.index)}")
 
         self.df_len = len(self.df.index)

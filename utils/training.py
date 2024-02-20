@@ -1,6 +1,8 @@
 import os
+import csv
 import itertools
 import pandas as pd
+import tensorflow as tf
 
 from keras import losses, optimizers
 from keras.callbacks import (
@@ -12,15 +14,12 @@ from keras.callbacks import (
 
 from data.babycry import BabyCry
 from utils.metrics import get_f1, weighted_ce_loss
+from utils.calculate_loso_results import calc_loso_results
 from model.trill_extended import trill
 
 
 def train_single(
-    train_speakers: list,
-    val_speakers: list,
-    args: dict,
-    config: dict,
-    save_dir: str,
+    train_speakers: list, val_speakers: list, args: dict, config: dict, save_dir: str
 ):
     # Initialize model
     if config.model.name == "trill":
@@ -37,7 +36,11 @@ def train_single(
             mode="min",
         ),
         ReduceLROnPlateau(
-            monitor="val_loss", factor=0.5, patience=5, min_lr=1e-7, verbose=1
+            monitor="val_loss",
+            factor=0.5,
+            patience=5,
+            min_lr=1e-7,
+            verbose=1,
         ),
     ]
 
@@ -53,7 +56,7 @@ def train_single(
     # Initialize datasets
     val_dataset = BabyCry(
         config.data.dir,
-        "val",
+        "val" if train_speakers is None else "train_loso",
         config.train.batch_size,
         config.data.spec,
         val_speakers,
@@ -108,13 +111,16 @@ def train_single(
     model.summary()
 
     # Train model
-    model.fit(
-        train_dataset,
-        validation_data=val_dataset,
-        epochs=config.train.epochs,
-        batch_size=config.train.batch_size,
-        callbacks=callbacks,
-    )
+    if args.test is True:
+        model.load_weights(f"{save_dir}/model.h5")
+    else:
+        model.fit(
+            train_dataset,
+            validation_data=val_dataset,
+            epochs=config.train.epochs,
+            batch_size=config.train.batch_size,
+            callbacks=callbacks,
+        )
 
     loss, f1, acc = model.evaluate(
         test_dataset,
@@ -130,6 +136,11 @@ def train_single(
         model.save_weights(f"{save_dir}/model.h5")
     # model.save_weights(f"{save_dir}/model.h5")
 
+    del model
+    del train_dataset
+    del val_dataset
+    del test_dataset
+
     return loss, f1, acc, dev_loss, dev_f1, dev_acc
 
 
@@ -138,9 +149,27 @@ def train_loso(
     config: dict,
     save_dir: str,
 ):
+    gpus = tf.config.experimental.list_physical_devices("GPU")
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+
+    completed_speakers = []
+    if os.path.exists(f"{save_dir}/loso_results.csv"):
+        with open(f"{save_dir}/loso_results.csv", "r") as f:
+            reader = csv.reader(f)
+            next(reader)
+            completed_speakers = [row[0] for row in reader]
+
     val_speakers = pd.read_csv(os.path.join(config.data.dir, "val.csv"))["id"].unique()
-    ger_val_speakers = [s for s in val_speakers if s.startswith("G")]
-    jpn_val_speakers = [s for s in val_speakers if s.startswith("J")]
+    train_speakers = pd.read_csv(os.path.join(config.data.dir, "train.csv"))[
+        "id"
+    ].unique()
+    ger_val_speakers = [
+        s for s in itertools.chain(val_speakers, train_speakers) if s.startswith("G")
+    ]
+    jpn_val_speakers = [
+        s for s in itertools.chain(val_speakers, train_speakers) if s.startswith("J")
+    ]
 
     if len(ger_val_speakers) > len(jpn_val_speakers):
         # ger_val_speakers = ger_val_speakers[: len(jpn_val_speakers)]
@@ -155,61 +184,71 @@ def train_loso(
 
     loso_results = {}
 
-    for i in range(0, len(ger_val_speakers) - 1, 2):
-        print(
-            f"Training for GER/JPN val speaker {ger_val_speakers[i]}/{ger_val_speakers[i+1]}/{jpn_val_speakers[i]}/{jpn_val_speakers[i+1]}"
-        )
-        val_speakers = [
-            s
-            for s in itertools.chain(ger_val_speakers, jpn_val_speakers)
-            if (
-                s != ger_val_speakers[i]
-                and s != jpn_val_speakers[i]
-                and s != ger_val_speakers[i + 1]
-                and s != jpn_val_speakers[i + 1]
+    for i in range(0, len(ger_val_speakers) - 1):
+        if f"val_{ger_val_speakers[i]}_{jpn_val_speakers[i]}" in completed_speakers:
+            print(
+                f"Skipping training for GER/JPN val speaker {ger_val_speakers[i]}/{jpn_val_speakers[i]}"
             )
+            continue
+        print(
+            f"Training for GER/JPN val speaker {ger_val_speakers[i]}/{jpn_val_speakers[i]}"
+        )
+        val_speakers = [ger_val_speakers[i], jpn_val_speakers[i]]
+        train_speakers = [
+            s
+            for s in itertools.chain(train_speakers, val_speakers)
+            if (s != ger_val_speakers[i] and s != jpn_val_speakers[i])
         ]
+
+        print(f"Train speakers: {train_speakers}")
         print(f"Val speakers: {val_speakers}")
-        loss, f1, acc, dev_loss, dev_f1, dev_acc = train_single(
-            [
-                ger_val_speakers[i],
-                jpn_val_speakers[i],
-                ger_val_speakers[i + 1],
-                jpn_val_speakers[i + 1],
-            ],
+        _, f1, acc, dev_loss, dev_f1, dev_acc = train_single(
+            train_speakers,
             val_speakers,
             args,
             config,
-            f"{save_dir}/val_{ger_val_speakers[i]}_{ger_val_speakers[i+1]}_{jpn_val_speakers[i]}_{jpn_val_speakers[i+1]}",
+            f"{save_dir}/val_{ger_val_speakers[i]}_{jpn_val_speakers[i]}",
         )
 
         loso_results[
             f"{ger_val_speakers[i]}_{ger_val_speakers[i+1]}_{jpn_val_speakers[i]}_{jpn_val_speakers[i+1]}"
-        ] = [loss, f1, acc, dev_loss, dev_f1, dev_acc]
+        ] = [f1, acc, dev_loss, dev_f1, dev_acc]
 
-    avg_loss = sum([v[0] for v in loso_results.values()]) / len(loso_results)
-    avg_f1 = sum([v[1] for v in loso_results.values()]) / len(loso_results)
-    avg_acc = sum([v[2] for v in loso_results.values()]) / len(loso_results)
+        if not os.path.exists(f"{save_dir}/loso_results.csv"):
+            with open(f"{save_dir}/loso_results.csv", "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(
+                    [
+                        "val_speakers",
+                        "f1",
+                        "acc",
+                        "loss",
+                        "dev_f1",
+                        "dev_acc",
+                    ]
+                )
 
-    avg_dev_loss = sum([v[3] for v in loso_results.values()]) / len(loso_results)
-    avg_dev_f1 = sum([v[4] for v in loso_results.values()]) / len(loso_results)
-    avg_dev_acc = sum([v[5] for v in loso_results.values()]) / len(loso_results)
+        with open(f"{save_dir}/loso_results.csv", "a") as f:
+            str = [
+                f"val_{ger_val_speakers[i]}_{jpn_val_speakers[i]}",
+                f1,
+                acc,
+                dev_loss,
+                dev_f1,
+                dev_acc,
+            ]
+            writer = csv.writer(f)
+            writer.writerow(str)
 
-    max_f1 = max([v[1] for v in loso_results.values()])
-    min_f1 = min([v[1] for v in loso_results.values()])
-    max_val_f1 = max([v[4] for v in loso_results.values()])
-    min_val_f1 = min([v[4] for v in loso_results.values()])
-
-    print(f"Average test loss: {avg_loss}, f1: {avg_f1}, acc: {avg_acc} \n")
-    print(f"Average dev loss: {avg_dev_loss}, f1: {avg_dev_f1}, acc: {avg_dev_acc} \n")
-    print(f"Max f1: {max_f1}, max val f1: {max_val_f1} \n")
-    print(f"Min f1: {min_f1}, min val f1: {min_val_f1} \n")
+    avg_f1, avg_acc, avg_dev_f1, avg_dev_acc, max_f1, max_val_f1, min_f1, min_val_f1 = (
+        calc_loso_results(f"{save_dir}/loso_results.csv")
+    )
 
     return (
-        avg_loss,
+        "N/A",
         avg_f1,
         avg_acc,
-        avg_dev_loss,
+        "N/A",
         avg_dev_f1,
         avg_dev_acc,
         max_f1,
