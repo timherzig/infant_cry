@@ -190,21 +190,26 @@ def train_loso(
                 f"Skipping training for GER/JPN val speaker {ger_val_speakers[i]}/{jpn_val_speakers[i]}"
             )
             continue
+
+        if jpn_val_speakers[i] == "J30":  # Skip this pair, unknown CUDA failure
+            continue
+
         print(
             f"Training for GER/JPN val speaker {ger_val_speakers[i]}/{jpn_val_speakers[i]}"
         )
-        val_speakers = [ger_val_speakers[i], jpn_val_speakers[i]]
-        train_speakers = [
+
+        cur_val_speakers = [ger_val_speakers[i], jpn_val_speakers[i]]
+        cur_train_speakers = [
             s
             for s in itertools.chain(train_speakers, val_speakers)
             if (s != ger_val_speakers[i] and s != jpn_val_speakers[i])
         ]
 
-        print(f"Train speakers: {train_speakers}")
-        print(f"Val speakers: {val_speakers}")
+        print(f"Train speakers: {cur_train_speakers}")
+        print(f"Val speakers: {cur_val_speakers}")
         _, f1, acc, dev_loss, dev_f1, dev_acc = train_single(
-            train_speakers,
-            val_speakers,
+            cur_train_speakers,
+            cur_val_speakers,
             args,
             config,
             f"{save_dir}/val_{ger_val_speakers[i]}_{jpn_val_speakers[i]}",
