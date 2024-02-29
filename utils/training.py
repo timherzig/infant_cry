@@ -185,6 +185,7 @@ def train_loso(
     loso_results = {}
 
     for i in range(0, len(ger_val_speakers) - 1):
+        print(f"loop {i} of {len(ger_val_speakers) - 1}")
         if f"val_{ger_val_speakers[i]}_{jpn_val_speakers[i]}" in completed_speakers:
             print(
                 f"Skipping training for GER/JPN val speaker {ger_val_speakers[i]}/{jpn_val_speakers[i]}"
