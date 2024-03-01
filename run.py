@@ -23,13 +23,14 @@ def main(args):
     if name == "config":
         save_dir = f"./trained_models/debug" + ("/loso" if args.train_loso else "")
 
-    if os.path.exists(save_dir) and not args.train_loso:
+    if os.path.exists(save_dir) and not args.train_loso and not args.test:
         shutil.rmtree(save_dir)
 
     os.makedirs(save_dir, exist_ok=True)
 
     print(f"Saving to {save_dir}")
-    OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
+    if not args.test:
+        OmegaConf.save(config, os.path.join(save_dir, "config.yaml"))
 
     if args.train_loso is True:
         (
