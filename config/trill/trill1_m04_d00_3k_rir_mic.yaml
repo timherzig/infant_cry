@@ -2,7 +2,7 @@ data:
   dir: /netscratch/herzig/datasets/BabyCry_augment
   splits: ['train', 'val', 'test']
   spec: false
-  augment: 0.0
+  augment: 0.5
   rir_dir: /netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs
   mic_dir: /netscratch/herzig/datasets/mic_ir
   mix_up: 1.0
@@ -12,7 +12,7 @@ model:
   trill:
     hub_path: https://tfhub.dev/google/trillsson1/1
     trainable: false
-  dropout: 0.4
+  dropout: 0.0
   bi_lstm:
     use: true
     units: 64
