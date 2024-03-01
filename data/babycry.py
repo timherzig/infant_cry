@@ -208,9 +208,11 @@ class BabyCry(keras.utils.Sequence):
                 ]
             )
 
-            audio_batch, label_batch = mix_up(
+            audio_batch, _ = mix_up(
                 audio_batch, label_batch, audio_batch2, label_batch2, self.mix_up_alpha
             )
+
+            return audio_batch, label_batch
 
         if type(self.save_audio) == str:
             org_audio = [augment_audio(path, None, None, 0.0) for path in batch["path"]]
