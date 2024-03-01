@@ -21,6 +21,10 @@ from model.trill_extended import trill
 def train_single(
     train_speakers: list, val_speakers: list, args: dict, config: dict, save_dir: str
 ):
+    gpus = tf.config.experimental.list_physical_devices("GPU")
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+
     # Initialize model
     if config.model.name == "trill":
         model = trill(config)
@@ -112,7 +116,7 @@ def train_single(
 
     # Train model
     if args.test is True:
-        model.load_weights(f"{save_dir}/model.h5")
+        model.load_weights(f"{save_dir}/model/mdl_wts.hdf5")
     else:
         model.fit(
             train_dataset,
