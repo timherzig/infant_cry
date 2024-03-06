@@ -13,6 +13,7 @@ random_number = random.randint(0, 100000)
 
 
 def mix_up(x1, y1, x2, y2, alpha=0.2):
+    alpha = np.random.random() * alpha
     alpha = np.random.beta(alpha, alpha)
     x = alpha * x2 + (1 - alpha) * x1
     y = alpha * y2 + (1 - alpha) * y1
@@ -118,6 +119,7 @@ class BabyCry(keras.utils.Sequence):
         rir_dir=None,
         mic_dir=None,
         save_audio=False,
+        label_smoothing=False,
     ):
         self.dir = dir
         self.spec = spec
@@ -130,6 +132,7 @@ class BabyCry(keras.utils.Sequence):
         self.mic_dir = mic_dir
         self.mix_up = mix_up
         self.mix_up_alpha = mix_up_alpha
+        self.label_smoothing = label_smoothing
 
         if split != "train_loso":
             self.df = pd.read_csv(os.path.join(dir, split + ".csv"))
@@ -187,7 +190,18 @@ class BabyCry(keras.utils.Sequence):
         )
 
         if np.random.random() <= self.mix_up:
-            batch2 = self.df.sample(self.batch_size)
+            # batch2 = self.df.sample(self.batch_size)
+            g_indices = self.df[self.df["label"] == "G"].index
+            j_indices = self.df[self.df["label"] == "J"].index
+            indicies = []
+
+            for i in range(self.batch_size):
+                if label_batch[i][0] == 1.0:
+                    indicies.append(random.choice(g_indices))
+                else:
+                    indicies.append(random.choice(j_indices))
+            batch2 = self.df.iloc[indicies]
+
             audio_batch2 = [
                 augment_audio(path, self.rir_dir, self.mic_dir, self.augment)
                 for path in batch2["path"]
@@ -208,10 +222,12 @@ class BabyCry(keras.utils.Sequence):
                 ]
             )
 
-            audio_batch, _ = mix_up(
+            audio_batch, label_smooth = mix_up(
                 audio_batch, label_batch, audio_batch2, label_batch2, self.mix_up_alpha
             )
 
+            if self.label_smoothing:
+                label_batch = label_smooth
             return audio_batch, label_batch
 
         if type(self.save_audio) == str:

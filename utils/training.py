@@ -85,6 +85,7 @@ def train_single(
         rir_dir=config.data.rir_dir,
         mic_dir=config.data.mic_dir,
         save_audio=f"{save_dir}/example_train_audio",
+        label_smoothing=config.data.label_smoothing,
     )
 
     weights = train_dataset.get_weights()
