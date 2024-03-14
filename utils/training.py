@@ -21,6 +21,7 @@ from model.trill_extended import trill
 def train_single(
     train_speakers: list, val_speakers: list, args: dict, config: dict, save_dir: str
 ):
+    # Temporary fix for CUDA memory error, extends the time till memory overflow
     gpus = tf.config.experimental.list_physical_devices("GPU")
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
@@ -139,8 +140,8 @@ def train_single(
 
     if train_speakers is None:
         model.save_weights(f"{save_dir}/model.h5")
-    # model.save_weights(f"{save_dir}/model.h5")
 
+    # Clean up
     del model
     del train_dataset
     del val_dataset
@@ -154,6 +155,7 @@ def train_loso(
     config: dict,
     save_dir: str,
 ):
+    # Temporary fix for CUDA memory error, extends the time till memory overflow
     gpus = tf.config.experimental.list_physical_devices("GPU")
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
@@ -176,13 +178,12 @@ def train_loso(
         s for s in itertools.chain(val_speakers, train_speakers) if s.startswith("J")
     ]
 
+    # Make sure the number of speakers is the same
     if len(ger_val_speakers) > len(jpn_val_speakers):
-        # ger_val_speakers = ger_val_speakers[: len(jpn_val_speakers)]
         jpn_val_speakers = list(
             itertools.islice(itertools.cycle(jpn_val_speakers), len(ger_val_speakers))
         )
     elif len(jpn_val_speakers) > len(ger_val_speakers):
-        # jpn_val_speakers = jpn_val_speakers[: len(ger_val_speakers)]
         ger_val_speakers = list(
             itertools.islice(itertools.cycle(ger_val_speakers), len(jpn_val_speakers))
         )
@@ -191,13 +192,15 @@ def train_loso(
 
     for i in range(0, len(ger_val_speakers) - 1):
         print(f"loop {i} of {len(ger_val_speakers) - 1}")
+
+        # Skip if already completed in previous run
         if f"val_{ger_val_speakers[i]}_{jpn_val_speakers[i]}" in completed_speakers:
             print(
                 f"Skipping training for GER/JPN val speaker {ger_val_speakers[i]}/{jpn_val_speakers[i]}"
             )
             continue
 
-        if jpn_val_speakers[i] == "J30":  # Skip this pair, unknown CUDA failure
+        if jpn_val_speakers[i] == "J30":  # Skip this baby, unknown CUDA failure
             continue
 
         print(

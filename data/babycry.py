@@ -39,9 +39,7 @@ def augment_data(speech_path, irfile_path=None, mic_ir_file_path=None):
         speech = librosa.resample(speech, orig_sr=fs_s, target_sr=16000)
         fs_s = 16000
     speech_length = speech.shape[0]
-    speech = (speech - np.min(speech)) / (np.max(speech) - np.min(speech))  # normalize
-    # noise = np.random.normal(0, 0.01, speech_length)
-    # speech = speech + noise  # add noise
+    speech = (speech - np.min(speech)) / (np.max(speech) - np.min(speech))
 
     # convolution
     if irfile_path != None:
@@ -190,7 +188,6 @@ class BabyCry(keras.utils.Sequence):
         )
 
         if np.random.random() <= self.mix_up:
-            # batch2 = self.df.sample(self.batch_size)
             g_indices = self.df[self.df["label"] == "G"].index
             j_indices = self.df[self.df["label"] == "J"].index
             indicies = []

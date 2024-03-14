@@ -5,6 +5,7 @@ import soundfile as sf
 
 import utils.utility as utility
 
+# These need to be changed for equivalent paths
 RIR_PATH = "/netscratch/herzig/shared_projects/FAST-RIR/code_new/Generated_RIRs"
 MIC_PATH = "/netscratch/herzig/datasets/mic_ir"
 SAVE_PATH = "/netscratch/herzig/shared_projects/infant_cry/ir_examples/"

@@ -22,7 +22,7 @@ with the config linking to compatible data.
 Training using the configuration found in 'config/config_cluster.yaml' the model achieves an **F1 score of 0.8977** on previously unseen data after 20 epochs. This model was trained on non-augmented data, with a batch size of 32 and a learning rate of 0.0001. The model was trained on a single GPU (RTXA6000 48GB). Other experiments were run using augmented data which previously had led to improved performance. Augmentation methods can be found the repository https://github.com/timherzig/speech_augment, and using generated room impulse responses from a modified version of anton-jeran/FAST-RIR found here: https://github.com/timherzig/FAST-RIR.
 
 
-## Nov. 2023
+## Nov. 2023 (outdated)
 
 |Config|Test F1|
 |:---:|:---:|

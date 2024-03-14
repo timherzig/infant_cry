@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow_hub as hub
 
-from keras import layers, losses
+from keras import layers
 
 
 def trill(config):

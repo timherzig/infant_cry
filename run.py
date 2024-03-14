@@ -3,7 +3,6 @@ import shutil
 
 from omegaconf import OmegaConf
 
-from data.babycry import BabyCry
 from utils.parser import parse_arguments
 from utils.training import train_single, train_loso
 from utils.gen_ir_examples import gen_examples
